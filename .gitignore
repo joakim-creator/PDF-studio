@@ -1,0 +1,49 @@
+# Hemligheter — kontrollera att dessa gäller innan något committas
+.env
+.env.*
+!.env.example
+*.pk.json
+*.key
+*.pem
+.supabase/
+secrets/
+
+# Beroenden och bygge
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+instance/
+uploads/
+
+# Verktyg
+.vercel/
+.turbo/
+.cache/
+
+# Tillfälligt — hör egentligen hemma utanför repot
+tmp/
+scratch/
+*.local
+
+# Operativsystem och redigerare
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json

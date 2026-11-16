@@ -1,0 +1,73 @@
+# Beslutslogg
+
+Tekniska beslut som fattas under arbetets gång, och **varför** de togs.
+Produktbesluten står i [projektspecifikationen](projektspecifikation.md).
+
+Ett beslut ändras inte i efterhand — det ersätts av ett nytt som hänvisar tillbaka.
+Då syns det i loggen att något ändrades och varför, i stället för att historien
+skrivs om. Ett ersatt beslut som står kvar är inte pinsamt; det är den enda
+kvarvarande förklaringen till varför den uppenbara lösningen inte fungerade.
+
+**Status:** `GÄLLER` · `ERSATT AV B-xxx` · `ÅTERTAGET`
+
+---
+
+## B-001 — Flask som ramverk för API:et
+
+**Datum:** 2026-11-16 · **Status:** GÄLLER
+
+FastAPI och Flask var båda möjliga. PE Portal är byggd i Flask, och Projektmallens
+referensfiler (proxy, ärendenummer, inloggning med engångskod, händelselogg, backup,
+provfixtur) är skrivna för Flask.
+
+**Beslut:** Flask 3 med Flask-SQLAlchemy, samma versioner som PE Portal. Det öppna
+API:et beskrivs med OpenAPI via ett Flask-tillägg (APIFlask eller motsvarande, väljs i fas 5).
+
+**Konsekvens:** referensfilerna kan kopieras rakt av, och alla projekt har samma teknik.
+Tunga jobb (OCR, Word, podcast) körs i en jobbkö i stället för asynkront i webbprocessen.
+
+## B-002 — Azure, Sweden Central
+
+**Datum:** 2026-11-16 · **Status:** GÄLLER
+
+Företaget använder redan Microsoft 365 och Entra ID.
+
+**Beslut:** drift i Azure, region Sweden Central. Vilka Azure-tjänster (App Service eller VM,
+Azure Database for PostgreSQL, Blob Storage) som används bestäms i F0-20 när kostnaden är räknad.
+
+**Konsekvens:** inloggning och Microsoft Graph fungerar med samma konton. PE Portal kör inte i
+Azure, så utläggningsskripten därifrån måste anpassas.
+
+## B-003 — Inga AGPL-bibliotek
+
+**Datum:** 2026-11-16 · **Status:** GÄLLER
+
+Appen ska kunna säljas till andra bolag. AGPL kräver att koden blir öppen eller att en licens köps.
+
+**Beslut:** pikepdf (qpdf) för sidhantering, pypdfium2 (PDFium) för rendering till bild,
+pdf.js och pdf-lib i webbläsaren, python-docx för Word. Inte PyMuPDF eller Ghostscript.
+
+**Konsekvens:** PyMuPDFs bekväma API för textlager måste ersättas, till exempel med pikepdf
+och en egen textlagerskrivare i fas 3. Varje nytt beroende licenskontrolleras innan det läggs till.
+
+## B-004 — En databas per bolag
+
+**Datum:** 2026-11-16 · **Status:** GÄLLER
+
+Appen ska kunna säljas, och bolagens dokument får aldrig blandas.
+
+**Beslut:** masterdatabas för bolag, användare och roller, och en PostgreSQL-databas per bolag,
+som i PE Portal. Lagringsnycklar `<bolag>/<område>/<uuid>.<ändelse>`.
+
+**Konsekvens:** migrationer körs mot varje bolagsdatabas, och proven måste visa att ett bolag
+inte ser ett annat bolags data.
+
+## B-005 — Claude Opus 5.5 för all AI-tolkning
+
+**Datum:** 2026-11-16 · **Status:** GÄLLER
+
+**Beslut:** `claude-opus-5-5` via Anthropics Python-SDK. PDF:er skickas som dokumentblock, så att
+text i bilder tolkas utan separat OCR-motor. Promptcache för följdfrågor.
+
+**Konsekvens:** kostnaden mäts per anrop från dag ett (tabellen `ai_usage`) och stoppas av
+utgiftstaket på 450 kr i koden och 500 kr på kontot.

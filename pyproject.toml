@@ -1,0 +1,31 @@
+# Verktygsinställningar för verify-kedjan (F0-09): python scripts/verify.py
+
+[tool.ruff]
+target-version = "py312"
+extend-exclude = ["venv", "uploads", "instance"]
+
+[tool.ruff.lint]
+# Samma regler som PE Portal efter kodgranskningen 2026-10-27.
+select = ["E9", "F", "B", "SIM", "UP", "PIE", "RET", "C90"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app.py", "core", "scripts", "tests"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["app", "core"]
+omit = ["tests/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "error::DeprecationWarning:app",
+    "error::DeprecationWarning:core",
+    "error::DeprecationWarning:scripts",
+    "error::DeprecationWarning:tests",
+]

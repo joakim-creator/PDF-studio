@@ -1,0 +1,3 @@
+# Alla direkta beroenden låsta: en driftsättning installerar exakt det proven körts mot.
+# Varje nytt beroende licenskontrolleras först — inga AGPL-bibliotek (B-003).
+Flask==3.1.3   # BSD-3, samma version som PE Portal (B-001)

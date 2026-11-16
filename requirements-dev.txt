@@ -1,0 +1,7 @@
+# Verktyg för verify-kedjan (lint + typkontroll + prov). Behövs inte i drift.
+pytest==8.3.3
+ruff==0.6.9
+mypy==1.11.2
+coverage==7.6.10
+pip-audit==2.10.1
+python-dotenv==1.0.1   # läser .env när appen körs lokalt med flask run
