@@ -24,18 +24,20 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-      # Fillagringen i Azure provas mot Microsofts emulator (F1-01). Nyckeln nedan är emulatorns publicerade
-      # standardnyckel, ingen hemlighet.
-      azurite:
-        image: mcr.microsoft.com/azure-storage/azurite:3.33.0
-        ports:
-          - 10000:10000
-        options: --entrypoint azurite-blob
     env:
       PG_TEST_URL: postgresql://postgres:test@localhost:5432/test
-      AZURITE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;
+      # Fillagringen i Azure provas mot Microsofts emulator Azurite (F1-01). Nyckeln är emulatorns publicerade
+      # standardnyckel, ingen hemlighet. Startas som ett steg: en tjänst kan inte ta startargument, och utan
+      # --blobHost 0.0.0.0 lyssnar emulatorn bara inne i sin container.
+      AZURITE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;
       REQUIRE_AZURITE: '1'
     steps:
+      - name: Starta Azurite
+        run: |
+          docker run -d --name azurite -p 127.0.0.1:10000:10000 mcr.microsoft.com/azure-storage/azurite:3.33.0 \
+            azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:10000/ && exit 0; sleep 1; done
+          docker logs azurite; exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
