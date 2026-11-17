@@ -31,10 +31,20 @@ def test_aterstallningen_tar_bort_allt_och_migrationen_gar_att_kora_igen(
         pg_database: Callable[[], str], kind: str) -> None:
     engine = create_engine(pg_database())
     migrations.migrate(engine, kind)
-    latest = migrations.discover(kind)[-1]
-    assert migrations.rollback(engine, kind, latest.version) == latest.label
+    every = migrations.discover(kind)
+    for m in reversed(every):   # bara den senaste får återställas, så baklänges en i taget
+        assert migrations.rollback(engine, kind, m.version) == m.label
     assert set(inspect(engine).get_table_names()) == {migrations.TABLE}
-    assert migrations.migrate(engine, kind) == [latest.label]
+    assert migrations.migrate(engine, kind) == [m.label for m in every]
+    engine.dispose()
+
+
+def test_bara_den_senaste_migrationen_far_aterstallas(pg_database: Callable[[], str]) -> None:
+    engine = create_engine(pg_database())
+    migrations.migrate(engine, 'tenant')
+    first = migrations.discover('tenant')[0]
+    with pytest.raises(migrations.MigrationError, match='bara den senaste'):
+        migrations.rollback(engine, 'tenant', first.version)
     engine.dispose()
 
 

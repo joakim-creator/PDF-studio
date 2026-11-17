@@ -23,6 +23,9 @@ Rubriker som används: `Tillagt`, `Ändrat`, `Rättat`, `Borttaget`, `Säkerhet`
 - Konton inaktiveras, tillägg delas ut uttryckligen och loggas [F0-14, F0-15]
 - Radlås som läser om, och vaktprov för modulgränser [F0-17, F0-18]
 - GDPR-förteckning, gallringsregel med torrkörning, beslut av GDPR-ansvarig och registerutdrag [F0-16]
+- Inloggning med Microsoft och reservkonto (lösenord och engångskod), spärr, inloggningslogg och CSRF-skydd [F0-13]
+- Ett inaktiverat konto tappar sin pågående session [F0-14]
+- Kommandona `bolag-skapa` och `konto-skapa` [F0-13]
 
 ### Ändrat
 

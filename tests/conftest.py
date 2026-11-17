@@ -24,9 +24,17 @@ _TMP = Path(tempfile.mkdtemp(prefix='pdfstudio-prov-'))
 os.environ['SECRET_KEY'] = 'prov-hemlighet'
 os.environ['MASTER_DATABASE_URL'] = f'sqlite:///{(_TMP / "master.db").as_posix()}'
 os.environ['PDF_LOG_REQUESTS'] = '0'
+os.environ['ENTRA_CLIENT_ID'] = 'prov-klient'          # Microsoft-inloggningen prövas alltid mot låtsasklienten
+os.environ['ENTRA_CLIENT_SECRET'] = 'prov-hemlighet'
+os.environ.pop('GLITCHTIP_DSN', None)
+os.environ.pop('TOTP_KEY', None)
+
+from typing import Any  # noqa: E402
 
 from flask import Flask  # noqa: E402
+from flask.testing import FlaskClient  # noqa: E402
 from sqlalchemy import create_engine, text  # noqa: E402
+from werkzeug.test import TestResponse  # noqa: E402
 
 from app import create_app  # noqa: E402
 from core.db_routing import dispose_engines  # noqa: E402
@@ -35,7 +43,7 @@ from core.tenant import create_master_schema, create_tenant_schema, tenant_conte
 from extensions import db  # noqa: E402
 
 TEMPLATE_SLUG = 'mall'
-_flask_app = create_app({'TESTING': True})
+_flask_app = create_app({'TESTING': True, 'WTF_CSRF_ENABLED': False})
 _templates: dict[bool, Path] = {}
 
 
@@ -68,6 +76,7 @@ class TestTenant:
     slug: str
     database_url: str
     tenant_id: int
+    entra_tenant_id: str
 
     def context(self) -> AbstractContextManager[None]:
         return tenant_context(self.database_url)
@@ -83,10 +92,10 @@ def make_tenant(app: Flask) -> Callable[..., TestTenant]:
         url = f'sqlite:///{path.as_posix()}'
         shutil.copyfile(_template(seed), path)
         with app.app_context():
-            tenant = Tenant(slug=slug, name=f'Provbolag {slug}', database_url=url)
+            tenant = Tenant(slug=slug, name=f'Provbolag {slug}', database_url=url, entra_tenant_id=str(uuid.uuid4()))
             db.session.add(tenant)
             db.session.commit()
-            t = TestTenant(slug, url, tenant.id)
+            t = TestTenant(slug, url, tenant.id, str(tenant.entra_tenant_id))
             if seed:
                 with t.context():
                     db.session.execute(
@@ -102,6 +111,61 @@ def make_tenant(app: Flask) -> Callable[..., TestTenant]:
 @pytest.fixture
 def tenant(make_tenant: Callable[..., TestTenant]) -> TestTenant:
     return make_tenant()
+
+
+def local_login(client: FlaskClient, tenant: TestTenant, username: str, password: str) -> TestResponse:
+    """Lokal inloggning som i drift: lösenordet och sedan engångskoden. Nyckeln läses ur bolagets databas, som
+    användaren läser den på skärmen vid registreringen. Ingen bakdörr: samma två steg."""
+    response = client.post('/login', data={'tenant': tenant.slug, 'username': username, 'password': password})
+    if response.status_code != 302 or not response.headers['Location'].endswith('/login/kod'):
+        return response
+    from sqlalchemy import select
+
+    from core import totp
+    from models import User
+    with _flask_app.app_context(), tenant.context():
+        stored = db.session.scalars(select(User.totp_secret).where(User.username == username)).one()
+        secret = totp.decrypt(stored)
+    assert secret is not None
+    return client.post('/login/kod', data={'code': totp.code(secret)})
+
+
+class FakeMsal:
+    """Låtsas-Microsoft: ger de påståenden (claims) provet bestämt. Anropar aldrig nätet."""
+
+    def __init__(self, claims: dict[str, Any] | None = None, error: str | None = None) -> None:
+        self.claims, self.error = claims or {}, error
+
+    def initiate_auth_code_flow(self, scopes: list[str], redirect_uri: str, prompt: str | None = None) -> dict[str, Any]:
+        return {'auth_uri': 'https://login.prov.invalid/authorize', 'state': 'prov-state'}
+
+    def acquire_token_by_auth_code_flow(self, flow: dict[str, Any], args: dict[str, Any]) -> dict[str, Any]:
+        if self.error:
+            return {'error': self.error}
+        return {'id_token_claims': self.claims}
+
+
+@pytest.fixture
+def microsoft(monkeypatch: pytest.MonkeyPatch) -> Callable[..., FakeMsal]:
+    """Ställ in vad Microsoft svarar och gå igenom flödet: microsoft(claims) och sedan /auth/microsoft."""
+    from core import auth
+
+    def _set(claims: dict[str, Any] | None = None, error: str | None = None) -> FakeMsal:
+        fake = FakeMsal(claims, error)
+        monkeypatch.setattr(auth, 'entra_app', lambda: fake)
+        return fake
+
+    return _set
+
+
+@pytest.fixture(autouse=True)
+def no_real_microsoft(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Inget prov når Microsoft. Ett prov som behöver inloggningen ställer in svaret med fixturen `microsoft`."""
+    from core import auth
+
+    def refuse() -> None:
+        raise AssertionError('provet försökte anropa Microsoft på riktigt')
+    monkeypatch.setattr(auth, 'entra_app', refuse)
 
 
 @pytest.fixture

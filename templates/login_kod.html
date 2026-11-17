@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Engångskod – PDF-studio{% endblock %}
+{% block main_class %}auth{% endblock %}
+{% block content %}
+<section class="card auth-card" aria-labelledby="code-title">
+  <h1 id="code-title">Engångskod</h1>
+  {% if enrolling %}
+  <p>Första gången: lägg till kontot <strong>{{ username }}</strong> i en autentiseringsapp (till exempel Microsoft
+    Authenticator) med nyckeln nedan. Nyckeln visas bara nu.</p>
+  <p><code class="secret">{{ secret }}</code></p>
+  <p class="muted small">Eller öppna länken på telefonen: <a href="{{ otpauth }}">lägg till i appen</a></p>
+  {% else %}
+  <p>Skriv koden från autentiseringsappen för <strong>{{ username }}</strong>.</p>
+  {% endif %}
+  <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="code">Kod (6 siffror)</label>
+    <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required autofocus>
+    <button type="submit" class="btn btn-primary btn-block">Logga in</button>
+  </form>
+</section>
+{% endblock %}

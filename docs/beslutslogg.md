@@ -75,6 +75,20 @@ Användare, tillägg och allt annat ligger i bolagets databas.
 **Konsekvens:** en person som arbetar i två bolag har två konton. Vid inloggning slås bolaget
 upp via Entra-katalogens id innan användaren kan hittas (F0-13).
 
+## B-007 — En adress för alla bolag; bolaget väljs vid inloggningen
+
+**Datum:** 2026-11-17 · **Status:** GÄLLER
+
+PE Portal har en domän per bolag. PDF-studio ska kunna säljas till många bolag, och en
+domän per bolag kräver ett DNS- och certifikatsteg för varje ny kund.
+
+**Beslut:** en adress för alla. Med Microsoft hittas bolaget via katalogens id i
+inloggningen (Entra-appen tar emot flera organisationer). Med reservkonto anger man
+bolaget i formuläret. Sessionen bär bolagets id och användarnamnet och är signerad.
+
+**Konsekvens:** inget DNS-steg per kund. Ett felstavat bolag ger samma fel som fel
+lösenord, så inga bolagsnamn går att gissa fram.
+
 ## B-005 — Claude Opus 5.5 för all AI-tolkning
 
 **Datum:** 2026-11-16 · **Status:** GÄLLER

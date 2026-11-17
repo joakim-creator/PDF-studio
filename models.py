@@ -33,6 +33,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from flask_login import UserMixin
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.timeutil import utcnow
@@ -42,6 +43,7 @@ VERSION_SOURCES = ('upload', 'merge', 'split', 'pages', 'annotate', 'ocr', 'comp
 ANNOTATION_KINDS = ('highlight', 'underline', 'freetext', 'note', 'ink', 'stamp')
 JOB_KINDS = ('ocr', 'word', 'excel', 'podcast', 'compress', 'image')
 JOB_STATUSES = ('queued', 'running', 'done', 'failed')
+LOGIN_METHODS = ('password', 'totp', 'microsoft')
 
 TS = DateTime(timezone=True)
 
@@ -50,7 +52,7 @@ def _in(column: str, values: tuple[str, ...]) -> str:
     return f"{column} IN ({', '.join(repr(v) for v in values)})"
 
 
-class User(db.Model):  # type: ignore[name-defined]
+class User(UserMixin, db.Model):  # type: ignore[name-defined]
     """En användare i bolaget. Entra är huvudvägen; lokala konton har lösenord och engångskod (F0-13)."""
 
     __tablename__ = 'users'
@@ -68,6 +70,23 @@ class User(db.Model):  # type: ignore[name-defined]
     failed_logins: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(TS, nullable=True)
     created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
+    totp_enabled_at: Mapped[datetime | None] = mapped_column(TS, nullable=True)   # appen registrerad (F0-13)
+    last_login_at: Mapped[datetime | None] = mapped_column(TS, nullable=True)
+
+
+class LoginEvent(db.Model):  # type: ignore[name-defined]
+    """Varje inloggningsförsök (F0-13): vem, metod, utfall, klientens adress. Även okända användarnamn."""
+
+    __tablename__ = 'login_events'
+    __table_args__ = (CheckConstraint(_in('method', LOGIN_METHODS), name='ck_login_events_method'),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+    username: Mapped[str] = mapped_column(String(120), nullable=False)
+    method: Mapped[str] = mapped_column(String(16), nullable=False)
+    outcome: Mapped[str] = mapped_column(String(20), nullable=False)
+    ip: Mapped[str] = mapped_column(String(45), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow, index=True)
 
 
 class UserPermission(db.Model):  # type: ignore[name-defined]

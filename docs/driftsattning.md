@@ -20,12 +20,26 @@ Sådant som kräver inloggning och inte kan automatiseras. Numrera dem och noter
 vilken backloggpost de blockerar, så att det syns när något står stilla i väntan på
 ett konto.
 
-### 1. <tjänst>
+### 1. Microsoft-inloggning (Entra ID) (F0-13)
 
-1.
-2.
+PDF-studio är en app för **flera organisationer** (varje bolag har sin egen Entra-katalog), så
+registreringen görs en gång, i den katalog som äger appen.
 
-**Blockerar:** F0-xx
+1. Entra-administrationscentret → Identitet → Program → Appregistreringar → **Ny registrering**.
+   Namn `PDF-studio`; kontotyper **Konton i alla organisationskataloger (flera klientorganisationer)**;
+   omdirigerings-URI (webb) `https://<dev-domän>/auth/microsoft/callback`. Lägg till samma för prod senare.
+2. Under **Certifikat och hemligheter**: ny klienthemlighet. Värdet visas bara en gång — lägg det direkt i
+   dev-miljöns miljöfil som `ENTRA_CLIENT_SECRET`, aldrig i chatten eller i repot. Programmets (klientens)
+   id blir `ENTRA_CLIENT_ID`.
+3. Behörigheter: bara `openid`, `profile`, `email` (standard). Inga administratörsmedgivanden behövs.
+4. För varje bolag: katalogens id (Entra → Översikt → Klientorganisations-id) läggs in med
+   `flask --app app bolag-skapa <slug> <namn> --databas <url> --entra-katalog <id>`. Första gången någon i
+   en annan organisation loggar in godkänner deras administratör appen.
+5. Användarna läggs upp med e-postadressen (`konto-skapa ... --epost`); Microsoft-kontot binds vid första
+   inloggningen. Ingen skapas automatiskt.
+6. Prova: logga in med Microsoft i dev, och se raden `microsoft ok` i inloggningsloggen.
+
+**Blockerar:** F0-13 (skarpt prov)
 
 ### 2. Felrapportering och hälsokontroll (F0-11)
 

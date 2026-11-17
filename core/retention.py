@@ -6,7 +6,7 @@ Regeln (docs/GDPR.md):
 - Ett dokument vars gallringstid (`purge_after`) passerats står på tur.
 - Ett dokument utan aktivitet (ny version eller kommentar) i **24 månader** prövas av GDPR-ansvarig, som beslutar:
   gallra, eller behåll med angiven anledning och ny prövning efter 24 månader.
-- AI-kostnaderna sparas 24 månader och händelseloggen 36 månader.
+- AI-kostnaderna sparas 24 månader, händelseloggen 36 månader och inloggningsloggen 12 månader.
 
 `candidates()` ändrar ingenting (torrkörning). Bara `decide()` ändrar, kräver tillägget `gdpr.besluta` och loggas.
 
@@ -32,6 +32,7 @@ from models import (
     DocumentShare,
     DocumentVersion,
     Job,
+    LoginEvent,
     User,
     UserPermission,
 )
@@ -40,6 +41,7 @@ TRASH_DAYS = 7
 INACTIVE_MONTHS = 24
 AI_USAGE_MONTHS = 24
 AUDIT_MONTHS = 36
+LOGIN_MONTHS = 12
 DECIDE = 'gdpr.besluta'
 
 REASON_TRASH = 'papperskorgen'
@@ -107,6 +109,8 @@ def log_rows_due(now: datetime | None = None) -> dict[str, int]:
                                       .where(AiUsage.created_at < months_before(now, AI_USAGE_MONTHS))) or 0,
         'audit_events': db.session.scalar(select(func.count()).select_from(AuditEvent)
                                           .where(AuditEvent.created_at < months_before(now, AUDIT_MONTHS))) or 0,
+        'login_events': db.session.scalar(select(func.count()).select_from(LoginEvent)
+                                          .where(LoginEvent.created_at < months_before(now, LOGIN_MONTHS))) or 0,
     }
 
 

@@ -31,6 +31,7 @@ Migrationerna körs med `core/migrations.py`, som vägrar köra en migration uta
 |---|---|---|---|---|---|
 | master/202611162200_baslinje | F0-04 | Bolagsregistret `tenants` | – | – | R-001 |
 | tenant/202611162200_baslinje | F0-04, F0-05 | Användare, tillägg, dokument, versioner, delningar, kommentarer, jobb, AI-kostnader, händelselogg | – | – | R-002 |
+| tenant/202611170200_inloggning | F0-13 | Inloggningsloggen `login_events`; `users.totp_enabled_at`, `users.last_login_at` | – | – | R-003 |
 
 ## Återställningar
 
@@ -59,3 +60,14 @@ DROP TABLE users;
 
 Tar bort allt i bolagets databas. Får bara köras på en bolagsdatabas utan
 riktiga dokument. Ta backup först, och kontrollera att det är dev.
+
+**R-003** — tenant/202611170200_inloggning
+
+```sql
+DROP TABLE login_events;
+ALTER TABLE users DROP COLUMN last_login_at;
+ALTER TABLE users DROP COLUMN totp_enabled_at;
+```
+
+Inloggningsloggen försvinner, och alla lokala konton måste registrera engångskoden på
+nytt. Koden från F0-13 måste tas tillbaka först, annars fallerar inloggningen.

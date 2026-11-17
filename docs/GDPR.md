@@ -29,6 +29,7 @@ Tiderna nedan är systemägarens förslag 2026-11-16. De beslutas av GDPR-ansvar
 | Tabell | Vem | Uppgifter | Varför (ändamål · grund) | Gallring |
 |---|---|---|---|---|
 | `users` | Användare (anställda, konsulter) | Användarnamn, namn, e-post, Microsoft-id, lösenordshash och engångskod för reservkonton, inloggningsförsök | Inloggning och behörighet · avtal (anställning, uppdrag) | Inaktiveras när personen slutar; raden finns kvar för spårbarheten (vem gjorde vad). E-post och Microsoft-id töms 24 månader efter inaktivering (byggs med inloggningen, F0-13) |
+| `login_events` | Användare och de som försöker logga in | Användarnamn (även okända), metod, utfall, klientens IP-adress, tid | Säkerhet: upptäcka och stoppa försök att gissa lösenord · berättigat intresse | 12 månader |
 | `user_permissions` | Användare | Vilka tillägg personen har och vem som gav dem | Behörighet · avtal | Tas bort när tillägget dras in; ändringen står i händelseloggen |
 | `documents` | Användare (ägare) och personer i dokumenten | Titel, ägare, tider | Själva tjänsten · avtal/berättigat intresse | Papperskorgen töms efter 7 dagar. Dokument utan aktivitet i 24 månader prövas av GDPR-ansvarig: gallra, eller behåll med angiven anledning och ny prövning efter 24 månader |
 | `document_versions` | Personer i dokumenten | Filerna (PDF) med allt innehåll, vem som skapade versionen | Själva tjänsten, originalet rörs aldrig · avtal | Med dokumentet |

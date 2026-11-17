@@ -78,6 +78,16 @@ def test_papperskorgen_toms_efter_sju_dagar(app: Flask, tenant: TestTenant) -> N
         assert _titles() == [('Anteckningar', retention.REASON_TRASH)]
 
 
+def test_loggarna_rakas_mot_sina_tider(app: Flask, tenant: TestTenant) -> None:
+    from models import AiUsage, LoginEvent
+    with app.app_context(), tenant.context():
+        db.session.execute(update(AiUsage).values(created_at=datetime(2024, 11, 16, tzinfo=UTC)))     # 24 mån + 1 dag
+        db.session.execute(update(LoginEvent).values(created_at=datetime(2025, 11, 18, tzinfo=UTC)))  # en dag kvar
+        db.session.commit()
+        assert retention.log_rows_due(NOW) == {'ai_usage': 1, 'audit_events': 0, 'login_events': 0}
+        assert retention.log_rows_due(NOW + timedelta(days=2))['login_events'] == 1
+
+
 def test_besluta_kraver_tillagget(app: Flask, tenant: TestTenant) -> None:
     with app.app_context(), tenant.context(), pytest.raises(AccessDenied) as denied:
         retention.decide(_user('erik'), _doc_id('Anteckningar'), keep=False)
