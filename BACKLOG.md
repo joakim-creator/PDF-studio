@@ -52,7 +52,7 @@ Mål: flödena Slå ihop och Dela fungerar som i prototypen. Krav K1–K4.
 | F1-01 | Uppladdning till Blob Storage, filtyp kontrolleras på innehållet, gräns 32 MB | KLAR | `core/storage.py` (lokalt och Azure Blob, provat mot Azurite i CI), `core/documents.py`: filtyp på innehållet, 32 MB. Formuläret kommer med F1-03 |
 | F1-02 | `documents` och `document_versions`; originalet rörs aldrig | KLAR | Originalet rörs aldrig: varje ändring är en ny version med förälder, under radlås |
 | F1-03 | Startsidan enligt prototypen: uppladdning, fem uppgifter, senaste dokument | KLAR | Startsidan enligt prototypen: uppladdning, fem uppgifter, senaste dokument. Kommandofältet är tills vidare en sökning bland dokumenten (kommandon i F7-03) |
-| F1-04 | Visning med pdf.js: miniatyrer, zoom, sök | PÅGÅR | Miniatyrer och sidbilder renderas på servern (B-009). Kvar: zoom i dokumentvyn och sökning i dokumentens text |
+| F1-04 | Visning med pdf.js: miniatyrer, zoom, sök | KLAR | Sidbilder på servern (B-009): miniatyrer, sida i större format med zoom (100/153/208 %) och bläddring, sökning i texten med markerade träffar |
 | F1-05 | Slå ihop med pikepdf, ordning, namn på ny fil | KLAR | Sidan `/sla-ihop` med ordning och namn; logiken i `core/pdfops.py` |
 | F1-06 | Dela: markerade sidor, en fil per sida, intervall | KLAR | Sidan `/dela/<id>`: markerade sidor, intervall, en fil per sida |
 | F1-07 | Rotera, ta bort och infoga sidor (även tom sida och sidor från annan fil) | KLAR | Dokumentvyn: rotera, ta bort, tom sida, sidor ur annan fil |

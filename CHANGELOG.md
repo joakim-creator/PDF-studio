@@ -31,6 +31,7 @@ Rubriker som används: `Tillagt`, `Ändrat`, `Rättat`, `Borttaget`, `Säkerhet`
 - Fillagring lokalt och i Azure Blob Storage, uppladdning med kontroll av filtypen [F1-01, F1-02]
 - Slå ihop, dela, rotera, ta bort och infoga sidor, och återställa en version — som nya versioner eller dokument [F1-05, F1-06, F1-07, F1-08]
 - Startsidan enligt prototypen, dokumentvyn med miniatyrer och versioner, och sidorna Slå ihop och Dela [F1-03, F1-04]
+- Sida i större format med zoom och bläddring, och sökning i dokumentens text [F1-04]
 
 ### Ändrat
 

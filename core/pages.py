@@ -91,8 +91,28 @@ def document(document_id: int) -> ResponseReturnValue:
     if version is None:
         abort(404)
     others = [d for d in db.session.scalars(visible_documents(_user()).order_by(Document.title)) if d.id != doc.id]
+    query = request.args.get('sok', '').strip()
+    hits: list[int] = []
+    if query:
+        _, data = documents.read(_user(), document_id, version.version_no)
+        hits = pdfops.search(data, query)
     return render_template('document.html', doc=doc, version=version, history=history, others=others,
-                           latest=history[-1], thumb_dpi=THUMB_DPI)
+                           latest=history[-1], thumb_dpi=THUMB_DPI, query=query, hits=hits)
+
+
+@pages_bp.get('/dokument/<int:document_id>/v<int:version_no>/sida-<int:page>')
+@login_required
+@handles_errors
+def page_view(document_id: int, version_no: int, page: int) -> ResponseReturnValue:
+    """En sida i större format, med zoom och bläddring (F1-04)."""
+    doc = get_document(_user(), document_id)
+    version, _ = documents.read(_user(), document_id, version_no)
+    if page < 1 or page > version.page_count:
+        abort(404)
+    dpi = request.args.get('dpi', type=int) or VIEW_DPI[1]
+    if dpi not in VIEW_DPI:
+        abort(400)
+    return render_template('page_view.html', doc=doc, version=version, page=page, dpi=dpi, zoom_levels=VIEW_DPI)
 
 
 @pages_bp.get('/dokument/<int:document_id>/v<int:version_no>/sida-<int:page>.png')

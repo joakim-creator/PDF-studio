@@ -162,6 +162,32 @@ def test_dela_markerade_och_intervall(app: Flask, tenant: TestTenant, anna: Flas
     assert 'Sidan 7 finns inte' in anna.get(bad.headers['Location']).get_data(as_text=True)
 
 
+def test_sida_i_storre_format_med_zoom_och_bladdring(app: Flask, tenant: TestTenant, anna: FlaskClient) -> None:
+    _upload(anna, ('Zoom.pdf', pdfs.make('Z', 3)))
+    doc_id = _doc_id(app, tenant, 'Zoom.pdf')
+    page = anna.get(f'/dokument/{doc_id}/v1/sida-2?dpi=150').get_data(as_text=True)
+    assert 'Sida 2 av 3' in page
+    assert f'/dokument/{doc_id}/v1/sida-2.png?dpi=150' in page
+    assert f'/dokument/{doc_id}/v1/sida-1?dpi=150' in page and f'/dokument/{doc_id}/v1/sida-3?dpi=150' in page
+    assert '208 %' in page and 'aria-current="true">208 %' in page
+    assert anna.get(f'/dokument/{doc_id}/v1/sida-4').status_code == 404
+    assert anna.get(f'/dokument/{doc_id}/v1/sida-1?dpi=999').status_code == 400
+    small, large = (anna.get(f'/dokument/{doc_id}/v1/sida-1.png?dpi={d}').data for d in (72, 150))
+    assert len(large) > len(small)
+
+
+def test_sok_i_dokumentets_text(app: Flask, tenant: TestTenant, anna: FlaskClient) -> None:
+    _upload(anna, ('Sök.pdf', pdfs.make('Belopp', 4)))
+    doc_id = _doc_id(app, tenant, 'Sök.pdf')
+    page = anna.get(f'/dokument/{doc_id}?sok=BELOPP3').get_data(as_text=True)
+    assert '”BELOPP3” finns på sidan 3.' in page
+    assert page.count('thumb-hit') == 1
+    all_pages = anna.get(f'/dokument/{doc_id}?sok=belopp').get_data(as_text=True)
+    assert '”belopp” finns på sidorna 1, 2, 3, 4.' in all_pages
+    none = anna.get(f'/dokument/{doc_id}?sok=saknas').get_data(as_text=True)
+    assert 'Ingen träff på ”saknas”.' in none
+
+
 def test_kommande_funktioner_sager_vilken_fas(anna: FlaskClient) -> None:
     assert 'byggs i fas 3' in anna.get('/kommer-snart/fraga-ai').get_data(as_text=True)
     assert anna.get('/kommer-snart/okand').status_code == 404

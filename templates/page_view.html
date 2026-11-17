@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Sida {{ page }} – {{ doc.title }} – PDF-studio{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('pages.document', document_id=doc.id, v=version.version_no) }}">← Tillbaka till {{ doc.title }}</a>
+<div class="doc-head">
+  <h1>Sida {{ page }} av {{ version.page_count }}</h1>
+  <nav class="toolbar" aria-label="Bläddra och zooma">
+    {% if page > 1 %}<a class="btn btn-ghost" href="{{ url_for('pages.page_view', document_id=doc.id, version_no=version.version_no, page=page - 1, dpi=dpi) }}">← Föregående</a>{% endif %}
+    {% if page < version.page_count %}<a class="btn btn-ghost" href="{{ url_for('pages.page_view', document_id=doc.id, version_no=version.version_no, page=page + 1, dpi=dpi) }}">Nästa →</a>{% endif %}
+    <span class="toolbar-gap"></span>
+    {% for level in zoom_levels %}
+    <a class="btn {{ 'btn-primary' if level == dpi else 'btn-ghost' }}" href="{{ url_for('pages.page_view', document_id=doc.id, version_no=version.version_no, page=page, dpi=level) }}" {% if level == dpi %}aria-current="true"{% endif %}>{{ (level * 100 // 72) }} %</a>
+    {% endfor %}
+  </nav>
+</div>
+<div class="page-view">
+  <img src="{{ url_for('pages.page_image', document_id=doc.id, version_no=version.version_no, page=page, dpi=dpi) }}" alt="Sida {{ page }} av {{ doc.title }}">
+</div>
+{% endblock %}

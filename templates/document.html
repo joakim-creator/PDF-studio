@@ -12,14 +12,21 @@
   <a class="btn btn-secondary" href="{{ url_for('pages.download', document_id=doc.id, v=version.version_no) }}">Ladda ner PDF</a>
 </div>
 
+<form method="get" action="{{ url_for('pages.document', document_id=doc.id) }}" class="form-row search-row" role="search">
+  <input type="hidden" name="v" value="{{ version.version_no }}">
+  <label>Sök i dokumentet <input name="sok" value="{{ query }}" placeholder="Ord eller belopp"></label>
+  <button class="btn btn-ghost">Sök</button>
+  {% if query %}<p class="muted" role="status">{% if hits %}”{{ query }}” finns på {{ 'sidan' if hits|length == 1 else 'sidorna' }} {{ hits|join(', ') }}.{% else %}Ingen träff på ”{{ query }}”. Skannade sidor blir sökbara med text i bild (fas 3).{% endif %}</p>{% endif %}
+</form>
+
 <form method="post" action="{{ url_for('pages.edit_pages', document_id=doc.id) }}" class="stack">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="card thumbs" role="group" aria-label="Sidor">
     {% for n in range(1, version.page_count + 1) %}
-    <label class="thumb">
-      <img src="{{ url_for('pages.page_image', document_id=doc.id, version_no=version.version_no, page=n, dpi=thumb_dpi) }}" alt="Sida {{ n }}" loading="lazy">
-      <span><input type="checkbox" name="pages" value="{{ n }}" {% if version.id != latest.id %}disabled{% endif %}> Sida {{ n }}</span>
-    </label>
+    <div class="thumb {% if n in hits %}thumb-hit{% endif %}">
+      <a href="{{ url_for('pages.page_view', document_id=doc.id, version_no=version.version_no, page=n) }}"><img src="{{ url_for('pages.page_image', document_id=doc.id, version_no=version.version_no, page=n, dpi=thumb_dpi) }}" alt="Sida {{ n }}, öppna i större format" loading="lazy"></a>
+      <label><input type="checkbox" name="pages" value="{{ n }}" {% if version.id != latest.id %}disabled{% endif %}> Sida {{ n }}{% if n in hits %} <span class="badge badge-success">träff</span>{% endif %}</label>
+    </div>
     {% endfor %}
   </div>
   {% if version.id == latest.id %}

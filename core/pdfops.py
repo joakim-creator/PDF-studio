@@ -149,6 +149,20 @@ def render_png(data: bytes, page: int, dpi: int = 72) -> bytes:
         doc.close()
 
 
+def search(data: bytes, query: str) -> list[int]:
+    """Sidorna (1-baserade) där texten förekommer, utan hänsyn till versaler. Skannade sidor hittas efter OCR (F3-05)."""
+    import pypdfium2 as pdfium
+    needle = ' '.join(query.split()).casefold()
+    if not needle:
+        return []
+    doc = pdfium.PdfDocument(data)
+    try:
+        return [n for n in range(1, len(doc) + 1)
+                if needle in ' '.join(str(doc[n - 1].get_textpage().get_text_bounded()).split()).casefold()]
+    finally:
+        doc.close()
+
+
 def text(data: bytes, page: int) -> str:
     """Sidans text (för prov och sökning). Skannade sidor ger tom text tills OCR finns (F3-05)."""
     import pypdfium2 as pdfium
