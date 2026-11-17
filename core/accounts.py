@@ -14,7 +14,7 @@ from extensions import db
 from models import User, UserPermission
 
 MANAGE_ACCOUNTS = 'konton.hantera'
-KNOWN_PERMISSIONS = ('dokument.radera', MANAGE_ACCOUNTS)
+KNOWN_PERMISSIONS = ('dokument.radera', MANAGE_ACCOUNTS, 'gdpr.besluta')
 
 
 def deactivate(actor: User, user: User) -> None:

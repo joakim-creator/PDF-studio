@@ -36,4 +36,6 @@ def create_app(config: dict[str, Any] | None = None) -> Flask:
 
     observability.init_app(app)
     security.init_app(app)
+    from core import cli
+    cli.register(app)
     return app

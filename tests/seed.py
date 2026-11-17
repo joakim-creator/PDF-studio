@@ -7,7 +7,7 @@ Personerna och vad de får:
 |---|---|---|---|---|
 | anna | vanlig | Offert Kund AB, Anteckningar | – | – |
 | bertil | vanlig | Faktura oktober | Offert Kund AB (delad) | – |
-| cecilia | administratör | – | – | inga (administratör får inget automatiskt) |
+| cecilia | administratör | – | – | gdpr.besluta, utdelat uttryckligen av erik (administratör får inget automatiskt) |
 | david | inaktiverad | Gammal rapport | – | – |
 | erik | vanlig | Hyresavtal L25 | – | dokument.radera, konton.hantera |
 
@@ -56,6 +56,8 @@ def seed_all(slug: str) -> None:
     for permission in ('dokument.radera', 'konton.hantera'):
         db.session.add(UserPermission(user_id=users['erik'].id, permission=permission,
                                       granted_by=users['cecilia'].id))
+    db.session.add(UserPermission(user_id=users['cecilia'].id, permission='gdpr.besluta',
+                                  granted_by=users['erik'].id))
 
     docs: dict[str, Document] = {}
     versions: dict[str, DocumentVersion] = {}

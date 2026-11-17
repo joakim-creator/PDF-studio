@@ -89,6 +89,14 @@ def test_inga_agpl_bibliotek() -> None:
     assert [n for n in names if n in AGPL_PACKAGES] == []
 
 
+def test_gdpr_forteckningen_tar_upp_varje_tabell_och_ar_beslutad(app: Flask) -> None:
+    doc = (ROOT / 'docs' / 'GDPR.md').read_text(encoding='utf-8')
+    with app.app_context():
+        tables = [t.name for t in db.metadata.sorted_tables]
+    assert [t for t in tables if f'`{t}`' not in doc] == []
+    assert re.findall(r'bestäms senare|TBD|\?\?\?', doc, re.IGNORECASE) == []
+
+
 def _app_sources() -> dict[Path, str]:
     return {p: p.read_text(encoding='utf-8') for p in ROOT.rglob('*.py')
             if 'venv' not in p.parts and 'tests' not in p.parts}
@@ -118,7 +126,8 @@ def test_konton_raderas_aldrig() -> None:
 
 def test_dokument_hamtas_bara_via_atkomstkontrollen() -> None:
     """Alla frågor mot Document går via core.access, så att ingen sida glömmer vem som får se vad."""
-    allowed = {ROOT / 'core' / 'access.py', ROOT / 'models.py'}
+    # Gallringen prövar bolagets alla dokument, men lämnar aldrig ut innehållet (core/retention.py).
+    allowed = {ROOT / 'core' / 'access.py', ROOT / 'models.py', ROOT / 'core' / 'retention.py'}
     pattern = re.compile(r'select\(Document\b|Document\.query|query\(Document\b')
     offenders = [str(p.relative_to(ROOT)) for p in ROOT.rglob('*.py')
                  if 'venv' not in p.parts and 'tests' not in p.parts and p not in allowed
