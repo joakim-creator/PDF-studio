@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{{ name }} – PDF-studio{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('pages.home') }}">← Tillbaka till start</a>
+<section class="card stack narrow">
+  <h1>{{ name }}</h1>
+  <p class="muted">Den här delen byggs i {{ phase }} enligt byggplanen.</p>
+</section>
+{% endblock %}

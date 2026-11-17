@@ -61,6 +61,11 @@ def test_uppladdning_kontrollerar_innehallet_inte_andelsen(ctx: TestTenant, data
     assert db.session.scalars(select(Document).where(Document.title == 'ser-ut-som.pdf')).all() == []
 
 
+def test_titeln_blir_bara_filnamnet_utan_styrtecken(ctx: TestTenant) -> None:
+    doc_id = _upload('C:\\Hemligt\\mapp/Rad\r\nbrytning\t.pdf', pdfs.make('T', 1))
+    assert db.session.get(Document, doc_id).title == 'Radbrytning.pdf'  # type: ignore[union-attr]
+
+
 def test_andras_dokument_gar_inte_att_lasa(ctx: TestTenant) -> None:
     doc_id = _upload('Privat.pdf', pdfs.make('P', 1))
     with pytest.raises(AccessDenied):

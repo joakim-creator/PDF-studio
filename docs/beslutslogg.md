@@ -105,6 +105,20 @@ stegen i driftsattning.md (steg 5–6) är skrivna för det.
 utläggningsflöde och räknas på innan det väljs. Kostnaden i kronor per månad ska
 hämtas ur Azures priskalkylator innan beslutet.
 
+## B-009 — Sidbilderna renderas på servern i första steget
+
+**Datum:** 2026-11-17 · **Status:** GÄLLER
+
+Specifikationen nämner pdf.js för visningen. pdf.js måste antingen laddas från ett CDN
+(extern part i varje sidvisning, och CSP:n behöver öppnas) eller läggas i repot.
+
+**Beslut:** miniatyrer och sidbilder renderas på servern med pypdfium2 (PDFium) och
+skickas som PNG. Ingen JavaScript från tredje part. pdf.js tas in när zoom och
+textmarkering i vyn byggs (F1-04, F2-01), och då i repot med låst version.
+
+**Konsekvens:** sidorna fungerar utan JavaScript och med strikt CSP. Varje sidbild kostar
+en rendering på servern; den cachas i webbläsaren eftersom en version aldrig ändras.
+
 ## B-005 — Claude Opus 5.5 för all AI-tolkning
 
 **Datum:** 2026-11-16 · **Status:** GÄLLER

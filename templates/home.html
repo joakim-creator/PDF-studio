@@ -1,5 +1,81 @@
 {% extends 'base.html' %}
+{% block main_class %}{% endblock %}
 {% block content %}
-<h1>Välkommen, {{ user.display_name }}</h1>
-<p class="muted">Startsidan byggs i fas 1 enligt prototypen.</p>
+<section class="hero">
+  <div class="hero-inner">
+    <span class="eyebrow eyebrow-light">PDF-studio</span>
+    <h1>Vad vill du göra med dina PDF:er?</h1>
+    <p class="lead">Dra in filer eller välj en uppgift. Originalet ändras aldrig. Varje ändring sparas som en ny version.</p>
+    <form method="get" action="{{ url_for('pages.home') }}" class="hero-search" role="search">
+      <label for="q" class="visually-hidden">Sök bland dina dokument</label>
+      <input id="q" name="q" value="{{ query }}" placeholder="Sök bland dina dokument">
+      <button type="submit" class="btn btn-dark">Sök</button>
+    </form>
+  </div>
+</section>
+
+<div class="page stack-lg">
+  <section class="dropzone" aria-labelledby="drop-title">
+    <span class="icon-tile" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+    </span>
+    <h2 id="drop-title">Ladda upp PDF:er</h2>
+    <p class="muted">Upp till 32 MB per uppladdning. Filtypen kontrolleras på innehållet.</p>
+    <form method="post" action="{{ url_for('pages.upload') }}" enctype="multipart/form-data" class="upload-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="files" class="visually-hidden">Välj filer</label>
+      <input id="files" name="files" type="file" accept="application/pdf,.pdf" multiple>
+      <button type="submit" class="btn btn-primary">Ladda upp</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="tasks-title" class="stack">
+    <h2 id="tasks-title" class="eyebrow">Uppgifter</h2>
+    <div class="tiles">
+      <a class="tile" href="{{ url_for('pages.merge') }}">
+        <span class="icon-tile" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><path d="M6.5 12v3a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-3"/><path d="M12 17v4"/></svg></span>
+        <span class="tile-title">Slå ihop</span><span class="muted">Flera PDF:er blir en fil</span>
+      </a>
+      <a class="tile" href="{{ url_for('pages.split_choose') }}">
+        <span class="icon-tile" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/><path d="M14.47 14.48L20 20"/><path d="M8.12 8.12L12 12"/></svg></span>
+        <span class="tile-title">Dela</span><span class="muted">Dra ut sidor till egna filer</span>
+      </a>
+      <a class="tile" href="{{ url_for('pages.coming_soon', feature='kommentera') }}">
+        <span class="icon-tile" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="tile-title">Kommentera</span><span class="muted">Markera, stryk under, skriv</span>
+      </a>
+      <a class="tile" href="{{ url_for('pages.coming_soon', feature='exportera') }}">
+        <span class="icon-tile" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
+        <span class="tile-title">Exportera</span><span class="muted">Till bild eller Word</span>
+      </a>
+      <a class="tile" href="{{ url_for('pages.coming_soon', feature='fraga-ai') }}">
+        <span class="icon-tile icon-tile-orange" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+        <span class="tile-title">Fråga AI</span><span class="muted">Svar med sidhänvisning</span>
+      </a>
+    </div>
+  </section>
+
+  <section aria-labelledby="recent-title" class="stack">
+    <h2 id="recent-title" class="eyebrow">{% if query %}Träffar för ”{{ query }}”{% else %}Senaste dokument{% endif %}</h2>
+    {% if rows %}
+    <div class="card table-wrap">
+      <table>
+        <thead><tr><th>Namn</th><th>Sidor</th><th>Ändrad</th><th>Version</th></tr></thead>
+        <tbody>
+        {% for doc, version in rows %}
+          <tr>
+            <td><a href="{{ url_for('pages.document', document_id=doc.id) }}">{{ doc.title }}</a></td>
+            <td class="muted">{{ version.page_count }}</td>
+            <td class="muted">{{ version.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td><span class="badge {% if version.version_no > 1 %}badge-success{% endif %}">{% if version.version_no == 1 %}Original{% else %}Version {{ version.version_no }}{% endif %}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="muted">{% if query %}Inga dokument matchar sökningen.{% else %}Inga dokument än. Ladda upp en PDF ovan.{% endif %}</p>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

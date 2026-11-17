@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Dela {{ doc.title }} – PDF-studio{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('pages.split_choose') }}">← Välj en annan fil</a>
+<h1>Dela {{ doc.title }}</h1>
+<p class="lead muted">Kryssa i sidorna du vill dra ut, eller ange ett intervall. Originalet är oförändrat.</p>
+<form method="post" class="stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card thumbs" role="group" aria-label="Sidor">
+    {% for n in range(1, version.page_count + 1) %}
+    <label class="thumb">
+      <img src="{{ url_for('pages.page_image', document_id=doc.id, version_no=version.version_no, page=n, dpi=thumb_dpi) }}" alt="Sida {{ n }}" loading="lazy">
+      <span><input type="checkbox" name="pages" value="{{ n }}"> Sida {{ n }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  <fieldset class="card stack">
+    <legend>Hur ska filen delas?</legend>
+    <label class="radio"><input type="radio" name="mode" value="selected" checked> De markerade sidorna blir en ny fil</label>
+    <label class="radio"><input type="radio" name="mode" value="each"> En fil per sida</label>
+    <label class="radio"><input type="radio" name="mode" value="range"> Intervall: <input name="ranges" placeholder="t.ex. 1-3, 5" aria-label="Intervall"></label>
+  </fieldset>
+  <div><button class="btn btn-primary">Dela och spara</button></div>
+</form>
+{% endblock %}

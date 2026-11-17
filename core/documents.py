@@ -44,7 +44,9 @@ def _slug() -> str:
 
 
 def _title(name: str) -> str:
-    title = (name or '').strip().replace('\\', '/').rsplit('/', 1)[-1]
+    """Bara filnamnet, utan sökväg och styrtecken (radbrytningar i ett filnamn hör inte hemma i en rubrik)."""
+    title = ''.join(c for c in (name or '') if c >= ' ' and c != '\x7f')
+    title = title.strip().replace('\\', '/').rsplit('/', 1)[-1].strip()
     return (title or 'Namnlöst.pdf')[:MAX_TITLE]
 
 

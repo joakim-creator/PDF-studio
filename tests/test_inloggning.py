@@ -48,7 +48,7 @@ def test_losenord_och_engangskod_loggar_in(app: Flask, tenant: TestTenant) -> No
     assert client.get('/').status_code == 302          # inte inloggad efter bara lösenordet
     res = local_login(client, tenant, 'anna', PASSWORDS['anna'])
     assert res.status_code == 302 and res.headers['Location'] == '/'
-    assert 'Välkommen, Anna Andersson' in client.get('/').get_data(as_text=True)
+    assert '<span class="muted">Anna Andersson</span>' in client.get('/').get_data(as_text=True)
     with app.app_context(), tenant.context():
         anna = _user('anna')
         assert anna.totp_enabled_at is not None and anna.last_login_at is not None
@@ -222,7 +222,7 @@ def test_microsoft_loggar_in_via_katalog_och_objekt_id(app: Flask, tenant: TestT
     microsoft({'tid': tenant.entra_tenant_id, 'oid': BERTIL_OID, 'preferred_username': 'bertil@prov.invalid'})
     client = app.test_client()
     assert _microsoft(client).headers['Location'] == '/'
-    assert 'Välkommen, Bertil Berg' in client.get('/').get_data(as_text=True)
+    assert '<span class="muted">Bertil Berg</span>' in client.get('/').get_data(as_text=True)
     assert _log(app, tenant) == [('bertil', 'microsoft', 'ok')]
 
 

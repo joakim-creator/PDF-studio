@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Slå ihop – PDF-studio{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('pages.home') }}">← Tillbaka till start</a>
+<h1>Slå ihop</h1>
+<p class="lead muted">Kryssa i filerna och ange ordningen. Resultatet sparas som en ny fil; originalen är oförändrade.</p>
+{% if rows|length < 2 %}
+<p class="muted">Du behöver minst två dokument. <a href="{{ url_for('pages.home') }}">Ladda upp</a> fler först.</p>
+{% else %}
+<form method="post" class="stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Med</th><th>Ordning</th><th>Fil</th><th>Sidor</th></tr></thead>
+      <tbody>
+      {% for doc, version in rows %}
+        <tr>
+          <td><input type="checkbox" name="docs" value="{{ doc.id }}" id="doc-{{ doc.id }}" aria-label="Ta med {{ doc.title }}"></td>
+          <td><input type="number" name="pos-{{ doc.id }}" value="{{ loop.index }}" min="1" class="input-small" aria-label="Ordning för {{ doc.title }}"></td>
+          <td><label for="doc-{{ doc.id }}">{{ doc.title }}</label></td>
+          <td class="muted">{{ version.page_count }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="form-row">
+    <label>Namn på den nya filen <input name="title" value="Ihopslagen.pdf" required></label>
+    <button class="btn btn-primary">Slå ihop och spara</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
