@@ -13,7 +13,7 @@ max-complexity = 20
 
 [tool.mypy]
 python_version = "3.12"
-files = ["app.py", "extensions.py", "models.py", "core", "scripts", "tests"]
+files = ["app.py", "wsgi.py", "extensions.py", "models.py", "core", "scripts", "tests"]
 ignore_missing_imports = true
 
 # core/migrations.py är kopierad från PE Portal utan typer; typas när den ändras.

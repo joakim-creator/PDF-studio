@@ -89,6 +89,22 @@ bolaget i formuläret. Sessionen bär bolagets id och användarnamnet och är si
 **Konsekvens:** inget DNS-steg per kund. Ett felstavat bolag ger samma fel som fel
 lösenord, så inga bolagsnamn går att gissa fram.
 
+## B-008 — Förslag: en Ubuntu-server per miljö i Azure, PostgreSQL som tjänst
+
+**Datum:** 2026-11-17 · **Status:** FÖRSLAG — beslutas av systemägaren när kostnaden är räknad
+
+B-002 lämnade öppet vilka Azure-tjänster som används. PE Portals utläggning (SSH till en
+server, migrationer före koden, hälsokontroll, återgång) är provad i drift och kan
+användas nästan oförändrad på en vanlig Linux-server.
+
+**Förslag:** en virtuell Ubuntu-server per miljö (B2s) med Nginx och gunicorn, och Azure
+Database for PostgreSQL (flexibel server, B1ms) i Sweden Central. Skripten i `deploy/` och
+stegen i driftsattning.md (steg 5–6) är skrivna för det.
+
+**Konsekvens:** samma arbetssätt som PE Portal. Alternativet App Service kräver ett annat
+utläggningsflöde och räknas på innan det väljs. Kostnaden i kronor per månad ska
+hämtas ur Azures priskalkylator innan beslutet.
+
 ## B-005 — Claude Opus 5.5 för all AI-tolkning
 
 **Datum:** 2026-11-16 · **Status:** GÄLLER

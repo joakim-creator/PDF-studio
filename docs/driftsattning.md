@@ -73,16 +73,43 @@ appen för nödkontot direkt efter driftsättningen, så att nödinloggningen ä
 datum här: ____. Tappad telefon: administratören återställer appen. Fem fel låser kontot i 15 minuter;
 inloggningsloggen visar försöken.
 
-### 5. GitHub och automatisk utläggning (F0-20, F0-21)
+### 5. Servern i Azure (F0-20)
 
-1. Repo på GitHub; grenarna `main` och `dev`. Skydd på `main`: kräver grön `verify`.
-2. På servern (dev, senare prod): installera deploy-användaren (förlaga `pe-portal/deploy/install_deploy_access.sh`).
-   Nyckelparet skapas på servern eller den egna datorn — den privata nyckeln går **bara** in i GitHub, aldrig i chatten.
+Förslag (B-008): en Ubuntu-server per miljö, med PostgreSQL som Azure-tjänst — samma upplägg som PE Portal, så att
+skripten i `deploy/` gäller som de är.
+
+1. Azure-portalen → Virtuella datorer → Skapa: Ubuntu 24.04 LTS, region **Sweden Central**, storlek B2s
+   (räcker för 8 användare), inloggning med SSH-nyckel. Öppna port 22 (bara från din adress), 80 och 443.
+2. Azure Database for PostgreSQL – flexibel server, Sweden Central, version 16, minsta storleken (Burstable B1ms).
+   Tillåt bara den virtuella servern i nätverket. Skapa databaserna `pdfstudio_master` och en per bolag.
+3. På servern (som root, ett steg i taget):
+   ```
+   apt install -y nginx python3.12-venv git postgresql-client-16 certbot python3-certbot-nginx
+   git clone https://github.com/joakim-creator/PDF-studio.git /var/www/pdf-studio
+   cd /var/www/pdf-studio && git checkout dev && python3 -m venv venv && venv/bin/pip install -r requirements.txt
+   install -d -m 700 /etc/pdf-studio   # miljöfilen /etc/pdf-studio/dev.env (Miljövariabler nedan), chmod 600
+   cp deploy/pdf-studio.service /etc/systemd/system/pdf-studio-dev.service && systemctl daemon-reload
+   cp deploy/nginx.conf /etc/nginx/sites-available/pdf-studio   # byt DOMÄN; länka till sites-enabled
+   set -a; . /etc/pdf-studio/dev.env; set +a; venv/bin/flask --app app db-migrate
+   systemctl enable --now pdf-studio-dev && certbot --nginx -d <domän>
+   ```
+4. Första bolaget och kontot: `flask --app app bolag-skapa ...` och `konto-skapa ...` (steg 1).
+5. `curl -s https://<domän>/health` ska ge `"status": "ok"`.
+
+**Blockerar:** F0-20
+
+### 6. GitHub och automatisk utläggning (F0-20, F0-21)
+
+1. Repo på GitHub (`joakim-creator/PDF-studio`); grenarna `main` och `dev`. Skydd på `main`: kräver grön `verify`.
+2. På servern: `bash deploy/install_deploy_access.sh dev <domän>`. Skriptet skapar användaren `deploy`, som bara
+   får köra `status` och `deploy <commit>`, och skriver ut nyckeln **en gång** — den går bara in i GitHub, aldrig i
+   chatten.
 3. GitHub → Settings → Secrets and variables → Actions: secrets `DEV_DEPLOY_KEY` (och `PROD_DEPLOY_KEY`),
    variabler `DEV_HOST`, `DEV_HOST_KEY` (och `PROD_HOST`, `PROD_HOST_KEY`). Utan `DEV_HOST` hoppas `deploy-dev` över.
 4. Prova: push till `dev` → Actions visar `verify` och `deploy-dev` gröna, och dev svarar 200 på `/health`.
    Låt ett avsiktligt fel fälla verify en gång innan kedjan räknas som klar.
-5. Prod: Actions → release → Run workflow från `main`, skriv `SLAPP`. Första gången: se att återgången fungerar.
+5. Prod: Actions → release → Run workflow från `main`, skriv `SLAPP`. Servern lägger bara ut den commit som
+   proven kördes på. Första gången: se att återgången fungerar.
 
 **Blockerar:** F0-20, F0-21
 
@@ -92,7 +119,13 @@ Sätts i driftsmiljön med **produktionens** värden — aldrig utvecklingens.
 
 | Variabel | Källa | Exponeras mot klienten |
 |---|---|---|
-| | | |
+| `SECRET_KEY` | Slumpad, `python -c "import secrets; print(secrets.token_urlsafe(48))"` | Nej |
+| `MASTER_DATABASE_URL` | Azure PostgreSQL, databasen `pdfstudio_master` | Nej |
+| `TOTP_KEY` | Egen Fernet-nyckel för engångskoderna | Nej |
+| `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | Appregistreringen (steg 1) | Nej |
+| `GLITCHTIP_DSN`, `ERROR_REPORT_HOURLY_MAX` | GlitchTip (steg 2) | Nej |
+| `PDF_ENV` | `dev` eller `prod` (syns i felrapporterna) | Nej |
+| `TENANT_POOL_SIZE`, `MASTER_POOL_SIZE` | Anslutningar per process (standard 4 och 2) | Nej |
 
 Variabler som exponeras mot klienten ska vara ofarliga att exponera. Skyddet ligger
 i åtkomstkontrollen på servern, inte i att nyckeln är svår att hitta.

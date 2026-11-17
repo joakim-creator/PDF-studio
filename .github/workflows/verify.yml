@@ -1,7 +1,6 @@
 # Verify-kedjan (F0-09): lint + typkontroll + prov vid varje push och pull request.
 # Förlaga: pe-portal/.github/workflows/verify.yml. PostgreSQL körs som tjänst så att databasproven
 # alltid körs här (--require-pg) — i CI får de aldrig hoppas över.
-# Jobbet deploy-dev läggs till i F0-20, när dev-miljön i Azure finns.
 name: verify
 
 on:
@@ -39,3 +38,24 @@ jobs:
       - name: Sarbarheter i beroendena
         run: pip-audit -r requirements.txt
         continue-on-error: true
+
+  # Automatisk utläggning i dev (F0-20): när grenen dev har gröna prov. Servern lägger bara ut exakt den
+  # provade commiten (github.sha). Hoppas över tills variabeln DEV_HOST finns (driftsattning.md steg 5).
+  deploy-dev:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && vars.DEV_HOST != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Las in deploy-nyckeln
+        env:
+          KEY: ${{ secrets.DEV_DEPLOY_KEY }}
+          HOST: ${{ vars.DEV_HOST }}
+          HOST_KEY: ${{ vars.DEV_HOST_KEY }}
+        run: bash deploy/ci_write_key.sh
+      - name: Lagg ut i dev
+        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes deploy@"${{ vars.DEV_HOST }}" "deploy ${{ github.sha }}"

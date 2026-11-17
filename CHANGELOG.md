@@ -26,6 +26,8 @@ Rubriker som används: `Tillagt`, `Ändrat`, `Rättat`, `Borttaget`, `Säkerhet`
 - Inloggning med Microsoft och reservkonto (lösenord och engångskod), spärr, inloggningslogg och CSRF-skydd [F0-13]
 - Ett inaktiverat konto tappar sin pågående session [F0-14]
 - Kommandona `bolag-skapa` och `konto-skapa` [F0-13]
+- Utläggning till dev och släpp till produktion: `deploy/`, jobbet `deploy-dev`, `release.yml`, bundna till den provade commiten [F0-20, F0-21]
+- Kommandona `db-status`, `db-migrate` och `backup-dump` [F0-20]
 
 ### Ändrat
 

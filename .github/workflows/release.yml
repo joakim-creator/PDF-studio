@@ -1,0 +1,65 @@
+# Släpp till produktionen (F0-21). Förlaga: pe-portal/.github/workflows/release.yml. Startas bara för hand av
+# systemägaren: GitHub → Actions → release → Run workflow (grenen main), skriv SLAPP i rutan.
+# Proven körs först; därefter tas en kopia av databaserna, migrationerna körs och sedan koden, med hälsokontroll och
+# automatisk återgång till föregående version om den fallerar. Servern lägger bara ut den provade commiten.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bekrafta:
+        description: 'Skriv SLAPP for att slappa main till produktionen'
+        required: true
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PG_TEST_URL: postgresql://postgres:test@localhost:5432/test
+    steps:
+      - name: Kontrollera gren och bekraftelse
+        env:
+          BEKRAFTA: ${{ inputs.bekrafta }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "Släpp görs bara från main (fick $GITHUB_REF)."; exit 1
+          fi
+          if [ "$BEKRAFTA" != "SLAPP" ]; then
+            echo "Skriv SLAPP i rutan för att bekräfta släppet."; exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Prov fore slapp
+        run: python scripts/verify.py --require-pg
+      - name: Anslut till produktionen
+        env:
+          KEY: ${{ secrets.PROD_DEPLOY_KEY }}
+          HOST: ${{ vars.PROD_HOST }}
+          HOST_KEY: ${{ vars.PROD_HOST_KEY }}
+        run: bash deploy/ci_write_key.sh
+      - name: Status fore slapp
+        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes deploy@"${{ vars.PROD_HOST }}" status
+      - name: Slapp
+        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes deploy@"${{ vars.PROD_HOST }}" "deploy ${{ github.sha }}"

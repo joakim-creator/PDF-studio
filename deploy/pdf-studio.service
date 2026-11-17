@@ -1,0 +1,22 @@
+# PDF-studio — systemd-tjänsten (F0-20). Installeras till /etc/systemd/system/ som pdf-studio-dev.service (dev)
+# eller pdf-studio.service (prod); byt `dev.env` mot `prod.env` för produktionen. driftsattning.md steg 4.
+[Unit]
+Description=PDF-studio
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/pdf-studio
+EnvironmentFile=/etc/pdf-studio/dev.env
+# Appen lyssnar bara på localhost; Nginx är den enda betrodda proxyn (F0-10).
+ExecStart=/var/www/pdf-studio/venv/bin/gunicorn --workers 2 --worker-class gthread --threads 4 --bind 127.0.0.1:8000 --access-logfile - wsgi:app
+Restart=on-failure
+RestartSec=3
+# Skydd: tjänsten får inte skriva utanför sin egen mapp.
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

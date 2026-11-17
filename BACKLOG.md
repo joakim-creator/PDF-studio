@@ -22,7 +22,7 @@ affärslogik. Fasen är klar när något går att köra och pröva.
 | ID | Uppgift | Status | Anteckning |
 |---|---|---|---|
 | F0-01 | Repo, `.gitignore`, `.env.example` | KLAR | joakim-creator/PDF-studio (publikt), grenarna `main` och `dev` |
-| F0-02 | Spårbarhetsdokument på plats | KLAR | Specifikation, backlogg fas 0–7, beslut B-001–B-007 |
+| F0-02 | Spårbarhetsdokument på plats | KLAR | Specifikation, backlogg fas 0–7, beslut B-001–B-008 |
 | F0-03 | Projektuppsättning (ramverk, språk, formatering) | KLAR | Flask-fabrik, ärendenummer, `/health`, ruff och mypy |
 | F0-04 | Datamodell: tabeller | KLAR | Master: `tenants`. Bolag: 9 tabeller i `models.py`. Migrationer `202611162200_baslinje` med återställning R-001, R-002 |
 | F0-05 | Index och villkor | KLAR | Index på varje FK, villkor för versioner, sidor, typer och belopp; vaktprov |
@@ -40,8 +40,8 @@ affärslogik. Fasen är klar när något går att köra och pröva.
 | F0-17 | Främmande nycklar på i proven; radlås läser om; säkerhetshuvuden; index på FK-kolumner | KLAR | FK och index (F0-04); `core/locking.py` låser och läser om, provat med två sessioner i PostgreSQL; säkerhetshuvuden med CSP i rapportläge. backend-grund 9, 12 |
 | F0-18 | Modulgränser som vaktprov (beroendematris); kärnan importerar aldrig en modul | KLAR | Vaktprov i `tests/test_vakt.py`; matrisen står i provets beskrivning. backend-grund 11 |
 | F0-19 | Provfixtur från mallfil: schema + seed byggs en gång per körning, varje prov kopierar filen; mål under 0,2 s per prov och hela verify under 5 min | KLAR | 35 prov på 1,4 s (2026-11-16) | backend-grund 13 |
-| F0-20 | Grenarna `main`/`dev`, `deploy-dev` vid push till `dev`, deploy-användare låst till `status`/`deploy`, migrationer före koden, hälsokontroll och återgång | TODO | versionering.md, driftsattning.md steg 5 |
-| F0-21 | Släpp till produktionen: `release.yml` (bara `main`, `SLAPP`), skydd på `main` (kräver grön verify) | TODO | versionering.md |
+| F0-20 | Grenarna `main`/`dev`, `deploy-dev` vid push till `dev`, deploy-användare låst till `status`/`deploy`, migrationer före koden, hälsokontroll och återgång | PÅGÅR | Filerna klara och provade: `deploy/`, jobbet `deploy-dev`, `wsgi.py`, `db-status`, `db-migrate`, `backup-dump`; servern lägger bara ut den provade commiten. Kvar: servern i Azure och ett skarpt prov (driftsattning.md steg 5–6). versionering.md |
+| F0-21 | Släpp till produktionen: `release.yml` (bara `main`, `SLAPP`), skydd på `main` (kräver grön verify) | PÅGÅR | `release.yml` klar och provad (bara `main`, `SLAPP`, prov först, provad commit). Kvar: produktionsservern och skydd på `main` i GitHub (steg 6). versionering.md |
 
 ## Fas 1 — Visa och sidor (0.1.0)
 
