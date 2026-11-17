@@ -2,7 +2,7 @@
 # pdf-deploy-root — driftsätter på den här servern (F0-20; förlaga pe-portal/deploy).
 #
 # Installeras till /usr/local/sbin av install_deploy_access.sh och körs via sudo av
-# användaren deploy, vars SSH-nyckel (i GitHub Actions) bara får köra /usr/local/bin/pdf-deploy.
+# användaren pdfdeploy, vars SSH-nyckel (i GitHub Actions) bara får köra /usr/local/bin/pdf-deploy.
 #
 #   pdf-deploy-root status          visar migrationsstatus för det som skulle läggas ut — ändrar inget
 #   pdf-deploy-root deploy <sha>    dev: lägger ut grenen dev.  prod: släpper main.
@@ -20,6 +20,7 @@
 #   SERVICE         systemd-tjänsten: pdf-studio-dev eller pdf-studio
 #   BRANCH          dev | main
 #   HEALTH_HOST     domänen, för hälsokontrollen
+#   APP_PORT        porten gunicorn lyssnar på (8010; PE Portal har 8000 på dev-servern)
 #   ENV_FILE        miljöfilen (/etc/pdf-studio/<miljö>.env); tom = läs miljön från den körande tjänsten
 
 set -euo pipefail
@@ -28,6 +29,7 @@ CONF=/etc/pdf-studio/deploy.conf
 [[ -f $CONF ]] || { echo "FEL: $CONF saknas — kör install_deploy_access.sh" >&2; exit 1; }
 # shellcheck source=/dev/null
 source "$CONF"
+APP_PORT=${APP_PORT:-8010}
 
 ACTION=${1:-}
 EXPECTED=${2:-}
@@ -70,7 +72,7 @@ health() {
     for _ in 1 2 3 4 5 6 7 8 9 10; do
         sleep 3
         code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $HEALTH_HOST" \
-               http://127.0.0.1:8000/health || true)
+               "http://127.0.0.1:$APP_PORT/health" || true)
         [[ "$code" == "200" ]] && return 0
     done
     echo "FEL: hälsokontrollen fick inte 200 från /health (senaste svar: $code)" >&2

@@ -32,6 +32,7 @@ Rubriker som används: `Tillagt`, `Ändrat`, `Rättat`, `Borttaget`, `Säkerhet`
 - Slå ihop, dela, rotera, ta bort och infoga sidor, och återställa en version — som nya versioner eller dokument [F1-05, F1-06, F1-07, F1-08]
 - Startsidan enligt prototypen, dokumentvyn med miniatyrer och versioner, och sidorna Slå ihop och Dela [F1-03, F1-04]
 - Sida i större format med zoom och bläddring, och sökning i dokumentens text [F1-04]
+- Microsoft-inloggning för en organisation: med `ENTRA_TENANT_ID` godtas bara den katalogen (B-011) [F0-13]
 
 ### Rättat
 
@@ -41,3 +42,5 @@ Rubriker som används: `Tillagt`, `Ändrat`, `Rättat`, `Borttaget`, `Säkerhet`
 ### Ändrat
 
 - Modellerna har typade kolumner (`Mapped`); schemat är oförändrat [F0-17]
+- Driften flyttas från Azure till DigitalOcean: dev bredvid PE Portal på `pe-portal-dev`, produktionen på egen droplet (B-010) [F0-20]
+- Egen deploy-användare `pdfdeploy`, systemanvändare `pdfstudio` och port 8010, så att PDF-studio inte krockar med PE Portal på samma server [F0-20]

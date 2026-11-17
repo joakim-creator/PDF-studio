@@ -1,9 +1,9 @@
 """
 Inloggning (F0-13; backend-grund 2 och 6). Förlaga: pe-portal/auth.py.
 
-- **Microsoft (Entra ID)** är huvudvägen. Bolaget hittas via katalogens id (`tid`) i inloggningen; användaren via
-  Microsofts fasta objekt-id (`oid`), eller första gången via e-postadressen, och binds då till det. Ingen användare
-  skapas automatiskt.
+- **Microsoft (Entra ID)** är huvudvägen. Med `ENTRA_TENANT_ID` godtas bara den katalogen (B-011). Bolaget hittas
+  via katalogens id (`tid`) i inloggningen; användaren via Microsofts fasta objekt-id (`oid`), eller första gången
+  via e-postadressen, och binds då till det. Ingen användare skapas automatiskt.
 - **Lokala konton** (reserv, externa konsulter): bolag, användarnamn, lösenord och sedan engångskod. Lösenord minst
   12 tecken; fem fel (lösenord eller kod) låser kontot i 15 minuter; tio misslyckade försök från samma adress på en
   minut ger 429.
@@ -194,12 +194,21 @@ def entra_configured() -> bool:
     return all(os.environ.get(k) for k in ('ENTRA_CLIENT_ID', 'ENTRA_CLIENT_SECRET'))
 
 
+def entra_tenant() -> str | None:
+    """Katalogen appen är registrerad i (B-011). Satt: bara den katalogen godtas. Tom: flera organisationer (B-007)."""
+    return os.environ.get('ENTRA_TENANT_ID', '').strip().lower() or None
+
+
+def entra_authority() -> str:
+    return f'https://login.microsoftonline.com/{entra_tenant() or "organizations"}'
+
+
 def entra_app() -> Any:
-    """MSAL-klienten (flera kataloger: varje bolag har sin egen). Byts ut i proven — de anropar aldrig Microsoft."""
+    """MSAL-klienten. Byts ut i proven — de anropar aldrig Microsoft."""
     import msal
     return msal.ConfidentialClientApplication(
         os.environ['ENTRA_CLIENT_ID'], client_credential=os.environ['ENTRA_CLIENT_SECRET'],
-        authority='https://login.microsoftonline.com/organizations')
+        authority=entra_authority())
 
 
 def _redirect_uri() -> str:
@@ -240,6 +249,8 @@ def microsoft_callback() -> ResponseReturnValue:
         return _deny('Microsoft-inloggningen avbröts eller misslyckades. Försök igen.')
     claims = result.get('id_token_claims') or {}
     tid, oid = claims.get('tid'), claims.get('oid')
+    if entra_tenant() and str(tid or '').lower() != entra_tenant():
+        return _deny('Organisationen är inte ansluten till PDF-studio.')
     email = (claims.get('preferred_username') or claims.get('email') or '').strip().lower()
     tenant = db.session.scalars(select(Tenant).where(Tenant.entra_tenant_id == tid,
                                                      Tenant.active.is_(True))).one_or_none() if tid else None

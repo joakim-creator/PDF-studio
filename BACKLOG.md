@@ -40,7 +40,7 @@ affärslogik. Fasen är klar när något går att köra och pröva.
 | F0-17 | Främmande nycklar på i proven; radlås läser om; säkerhetshuvuden; index på FK-kolumner | KLAR | FK och index (F0-04); `core/locking.py` låser och läser om, provat med två sessioner i PostgreSQL; säkerhetshuvuden med CSP i rapportläge. backend-grund 9, 12 |
 | F0-18 | Modulgränser som vaktprov (beroendematris); kärnan importerar aldrig en modul | KLAR | Vaktprov i `tests/test_vakt.py`; matrisen står i provets beskrivning. backend-grund 11 |
 | F0-19 | Provfixtur från mallfil: schema + seed byggs en gång per körning, varje prov kopierar filen; mål under 0,2 s per prov och hela verify under 5 min | KLAR | 35 prov på 1,4 s (2026-11-16) | backend-grund 13 |
-| F0-20 | Grenarna `main`/`dev`, `deploy-dev` vid push till `dev`, deploy-användare låst till `status`/`deploy`, migrationer före koden, hälsokontroll och återgång | PÅGÅR | Filerna klara och provade: `deploy/`, jobbet `deploy-dev`, `wsgi.py`, `db-status`, `db-migrate`, `backup-dump`; servern lägger bara ut den provade commiten. Kvar: servern i Azure och ett skarpt prov (driftsattning.md steg 5–6). versionering.md |
+| F0-20 | Grenarna `main`/`dev`, `deploy-dev` vid push till `dev`, deploy-användare låst till `status`/`deploy`, migrationer före koden, hälsokontroll och återgång | PÅGÅR | Filerna klara och provade: `deploy/`, jobbet `deploy-dev`, `wsgi.py`, `db-status`, `db-migrate`, `backup-dump`; servern lägger bara ut den provade commiten. Kvar: servern på DigitalOcean (B-010) och ett skarpt prov (driftsattning.md steg 5–6). versionering.md |
 | F0-21 | Släpp till produktionen: `release.yml` (bara `main`, `SLAPP`), skydd på `main` (kräver grön verify) | PÅGÅR | `release.yml` klar och provad (bara `main`, `SLAPP`, prov först, provad commit). Kvar: produktionsservern och skydd på `main` i GitHub (steg 6). versionering.md |
 
 ## Fas 1 — Visa och sidor (0.1.0)
@@ -84,7 +84,7 @@ Mål: flödena Slå ihop och Dela fungerar som i prototypen. Krav K1–K4.
 | F4-01 | Mobilvy och kameraskanner (foto till sökbar PDF) | TODO | |
 | F4-02 | Användartest: fem nyckelflöden med fem användare | TODO | Grind 1 |
 | F4-03 | Produktionsgranskning enligt `docs/produktionsgranskning.md` | TODO | |
-| F4-04 | Produktion i Azure, återställningsprov med datum | TODO | |
+| F4-04 | Produktion på egen droplet i DigitalOcean (B-010), återställningsprov med datum | TODO | |
 
 ## Fas 5 — Word, Excel och API (1.1.0)
 

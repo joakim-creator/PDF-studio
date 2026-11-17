@@ -69,4 +69,4 @@ jobs:
           HOST_KEY: ${{ vars.DEV_HOST_KEY }}
         run: bash deploy/ci_write_key.sh
       - name: Lagg ut i dev
-        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes deploy@"${{ vars.DEV_HOST }}" "deploy ${{ github.sha }}"
+        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes pdfdeploy@"${{ vars.DEV_HOST }}" "deploy ${{ github.sha }}"

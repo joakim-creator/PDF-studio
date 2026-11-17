@@ -60,6 +60,6 @@ jobs:
           HOST_KEY: ${{ vars.PROD_HOST_KEY }}
         run: bash deploy/ci_write_key.sh
       - name: Status fore slapp
-        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes deploy@"${{ vars.PROD_HOST }}" status
+        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes pdfdeploy@"${{ vars.PROD_HOST }}" status
       - name: Slapp
-        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes deploy@"${{ vars.PROD_HOST }}" "deploy ${{ github.sha }}"
+        run: ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes pdfdeploy@"${{ vars.PROD_HOST }}" "deploy ${{ github.sha }}"

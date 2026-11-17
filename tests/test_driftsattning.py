@@ -1,6 +1,7 @@
 """Utläggning och släpp (F0-20, F0-21): skripten, arbetsflödena och databaskommandona."""
 
 import os
+import re
 import shutil
 import subprocess
 from collections.abc import Callable
@@ -62,9 +63,31 @@ def test_tvingade_kommandot_slapper_bara_status_och_deploy_med_sha(tmp_path: Pat
 
 def test_sudo_regeln_tillater_exakt_status_och_deploy_med_fyrtio_tecken() -> None:
     install = (DEPLOY / 'install_deploy_access.sh').read_text(encoding='utf-8')
-    rule = next(line for line in install.splitlines() if line.startswith('deploy ALL=(root) NOPASSWD:'))
-    assert rule == ('deploy ALL=(root) NOPASSWD: /usr/local/sbin/pdf-deploy-root status, '
+    rule = next(line for line in install.splitlines() if line.startswith('pdfdeploy ALL=(root) NOPASSWD:'))
+    assert rule == ('pdfdeploy ALL=(root) NOPASSWD: /usr/local/sbin/pdf-deploy-root status, '
                     '/usr/local/sbin/pdf-deploy-root deploy ' + '?' * 40)
+
+
+def _code(path: Path) -> str:
+    """Filen utan kommentarsrader — kommentarerna får nämna PE Portals namn för att förklara varför de inte används."""
+    return '\n'.join(line for line in path.read_text(encoding='utf-8').splitlines()
+                     if not line.lstrip().startswith('#'))
+
+
+def test_delar_inte_anvandare_port_eller_namn_med_pe_portal() -> None:
+    """Dev körs på pe-portal-dev bredvid PE Portal (B-010). PE Portal har användaren deploy (vars authorized_keys
+    installationsskriptet skulle skriva över), port 8000, www-data, default_server i Nginx och namnen pe-*."""
+    install = _code(DEPLOY / 'install_deploy_access.sh')
+    assert 'DEPLOY_USER=pdfdeploy' in install
+    assert re.findall(r'(?<![\w$/-])deploy:|/home/deploy\b|-u deploy\b|^deploy ALL', install, re.MULTILINE) == []
+    for workflow in ('verify.yml', 'release.yml'):
+        text = (ROOT / '.github' / 'workflows' / workflow).read_text(encoding='utf-8')
+        assert ' deploy@' not in text and ' pdfdeploy@' in text, workflow
+    service = _code(DEPLOY / 'pdf-studio.service')
+    assert 'User=pdfstudio' in service and 'www-data' not in service
+    assert 'default_server' not in _code(DEPLOY / 'nginx.conf')
+    all_code = ' '.join(_code(p) for p in DEPLOY.iterdir())
+    assert re.findall(r'\bpe-(?:deploy|backup)\b', all_code) == []
 
 
 def test_databasen_fore_koden_och_kopia_fore_migrationerna() -> None:
@@ -83,8 +106,16 @@ def test_databasen_fore_koden_och_kopia_fore_migrationerna() -> None:
 
 def test_appen_lyssnar_bara_lokalt_bakom_en_proxy() -> None:
     service = (DEPLOY / 'pdf-studio.service').read_text(encoding='utf-8')
-    assert '--bind 127.0.0.1:8000' in service
     nginx = (DEPLOY / 'nginx.conf').read_text(encoding='utf-8')
+    install = (DEPLOY / 'install_deploy_access.sh').read_text(encoding='utf-8')
+    root = (DEPLOY / 'pdf-deploy-root.sh').read_text(encoding='utf-8')
+    # Samma port överallt, och inte PE Portals 8000 (B-010).
+    port = re.search(r'--bind 127\.0\.0\.1:(\d+) ', service)
+    assert port is not None
+    assert port.group(1) != '8000'
+    assert f'proxy_pass http://127.0.0.1:{port.group(1)};' in nginx
+    assert f'APP_PORT={port.group(1)} ' in install and f'APP_PORT=${{APP_PORT:-{port.group(1)}}}' in root
+    assert '"http://127.0.0.1:$APP_PORT/health"' in root and '127.0.0.1:8000' not in root
     for header in ('X-Forwarded-For $proxy_add_x_forwarded_for', 'X-Forwarded-Proto $scheme',
                    'X-Request-ID $request_id'):
         assert f'proxy_set_header {header};' in nginx

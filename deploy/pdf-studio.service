@@ -1,21 +1,24 @@
 # PDF-studio — systemd-tjänsten (F0-20). Installeras till /etc/systemd/system/ som pdf-studio-dev.service (dev)
-# eller pdf-studio.service (prod); byt `dev.env` mot `prod.env` för produktionen. driftsattning.md steg 4.
+# eller pdf-studio.service (prod); byt `dev.env` mot `prod.env` för produktionen. driftsattning.md steg 5.
+# Egen systemanvändare: på dev-servern kör PE Portal som www-data, och de två apparna ska inte kunna läsa
+# varandras filer (B-010).
 [Unit]
 Description=PDF-studio
 After=network.target
 
 [Service]
-User=www-data
-Group=www-data
+User=pdfstudio
+Group=pdfstudio
 WorkingDirectory=/var/www/pdf-studio
 EnvironmentFile=/etc/pdf-studio/dev.env
-# Appen lyssnar bara på localhost; Nginx är den enda betrodda proxyn (F0-10).
-ExecStart=/var/www/pdf-studio/venv/bin/gunicorn --workers 2 --worker-class gthread --threads 4 --bind 127.0.0.1:8000 --access-logfile - wsgi:app
+# Appen lyssnar bara på localhost; Nginx är den enda betrodda proxyn (F0-10). Port 8010: PE Portal har 8000.
+ExecStart=/var/www/pdf-studio/venv/bin/gunicorn --workers 2 --worker-class gthread --threads 4 --bind 127.0.0.1:8010 --access-logfile - wsgi:app
 Restart=on-failure
 RestartSec=3
-# Skydd: tjänsten får inte skriva utanför sin egen mapp.
+# Skydd: tjänsten får bara skriva i filmappen (STORAGE_FOLDER=/var/lib/pdf-studio/filer).
 NoNewPrivileges=true
-ProtectSystem=full
+ProtectSystem=strict
+ReadWritePaths=/var/lib/pdf-studio
 PrivateTmp=true
 
 [Install]

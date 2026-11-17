@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pdf-deploy — tvingat kommando för deploy-användarens SSH-nyckel (F0-20; förlaga pe-portal/deploy).
+# pdf-deploy — tvingat kommando för pdfdeploy-användarens SSH-nyckel (F0-20; förlaga pe-portal/deploy).
 # Installeras till /usr/local/bin. Nyckeln kan inte ge ett skal; det enda som går att be om är "status" eller
 # "deploy <sha>" (den provade commiten, 40 hexadecimala tecken), och då körs pdf-deploy-root via sudo.
 set -euo pipefail

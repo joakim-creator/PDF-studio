@@ -263,6 +263,34 @@ def test_microsoft_inaktiverat_konto_nekas(app: Flask, tenant: TestTenant, micro
     assert _log(app, tenant) == [('(microsoft)', 'microsoft', 'inaktiverad')]
 
 
+def test_en_organisation_godtar_sin_egen_katalog(app: Flask, tenant: TestTenant, microsoft: Any,
+                                                monkeypatch: pytest.MonkeyPatch) -> None:
+    """B-011: med ENTRA_TENANT_ID loggar appen in mot den katalogen och släpper in den (oavsett versaler)."""
+    from core import auth
+    monkeypatch.setenv('ENTRA_TENANT_ID', tenant.entra_tenant_id.upper())
+    assert auth.entra_authority() == f'https://login.microsoftonline.com/{tenant.entra_tenant_id}'
+    microsoft({'tid': tenant.entra_tenant_id, 'oid': BERTIL_OID})
+    client = app.test_client()
+    assert _microsoft(client).headers['Location'] == '/'
+
+
+def test_en_organisation_nekar_ett_annat_anslutet_bolag(app: Flask, make_tenant: Callable[..., TestTenant],
+                                                       microsoft: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """B-011: även ett bolag som finns i registret nekas om dess katalog inte är appens. Utan spärren loggar Bertil
+    in i det andra bolaget — seeden har honom i båda."""
+    from core import auth
+    own, other = make_tenant(), make_tenant()
+    monkeypatch.setenv('ENTRA_TENANT_ID', own.entra_tenant_id)
+    microsoft({'tid': other.entra_tenant_id, 'oid': BERTIL_OID})
+    client = app.test_client()
+    page = client.get(_microsoft(client).headers['Location']).get_data(as_text=True)
+    assert 'Organisationen är inte ansluten' in page
+    assert client.get('/').status_code == 302
+    assert _log(app, other) == []
+    monkeypatch.delenv('ENTRA_TENANT_ID')
+    assert auth.entra_authority() == 'https://login.microsoftonline.com/organizations'
+
+
 def test_microsoft_fel_fran_microsoft_nekas(app: Flask, tenant: TestTenant, microsoft: Any) -> None:
     microsoft(error='access_denied')
     client = app.test_client()

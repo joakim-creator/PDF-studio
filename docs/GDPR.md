@@ -18,7 +18,7 @@ Tiderna nedan är systemägarens förslag 2026-11-16. De beslutas av GDPR-ansvar
 ## Principer
 
 - **Bara det som behövs.** Ett fält om en person läggs till först när ett arbetsmoment behöver det.
-- **Data i EU.** Azure, Sweden Central (B-002). Varje bolag har en egen databas (B-004).
+- **Data i EU.** DigitalOcean, Frankfurt (B-010); backup i DigitalOcean Spaces, Frankfurt. Varje bolag har en egen databas (B-004).
 - **Dokumentens innehåll** kan handla om andra än användarna (fakturor, avtal). Det ägs av bolaget som laddade upp
   dem och gallras med dokumentet.
 - **AI:** dokument skickas till Anthropic för tolkning (B-005) enligt personuppgiftsbiträdesavtal; de används inte

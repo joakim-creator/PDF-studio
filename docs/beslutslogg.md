@@ -28,7 +28,7 @@ Tunga jobb (OCR, Word, podcast) körs i en jobbkö i stället för asynkront i w
 
 ## B-002 — Azure, Sweden Central
 
-**Datum:** 2026-11-16 · **Status:** GÄLLER
+**Datum:** 2026-11-16 · **Status:** ERSATT AV B-010
 
 Företaget använder redan Microsoft 365 och Entra ID.
 
@@ -91,7 +91,7 @@ lösenord, så inga bolagsnamn går att gissa fram.
 
 ## B-008 — Förslag: en Ubuntu-server per miljö i Azure, PostgreSQL som tjänst
 
-**Datum:** 2026-11-17 · **Status:** FÖRSLAG — beslutas av systemägaren när kostnaden är räknad
+**Datum:** 2026-11-17 · **Status:** ERSATT AV B-010
 
 B-002 lämnade öppet vilka Azure-tjänster som används. PE Portals utläggning (SSH till en
 server, migrationer före koden, hälsokontroll, återgång) är provad i drift och kan
@@ -118,6 +118,46 @@ textmarkering i vyn byggs (F1-04, F2-01), och då i repot med låst version.
 
 **Konsekvens:** sidorna fungerar utan JavaScript och med strikt CSP. Varje sidbild kostar
 en rendering på servern; den cachas i webbläsaren eftersom en version aldrig ändras.
+
+## B-010 — DigitalOcean i Frankfurt: dev på PE Portals dev-server, egen server för produktionen
+
+**Datum:** 2026-11-17 · **Status:** GÄLLER · ersätter B-002 och B-008
+
+Kostnaden i Azure räknades ur Azures prislista (SEK, 2026-11-17): cirka 220 kr per månad för
+dev och cirka 530 kr per månad för produktionen (virtuell server, PostgreSQL som tjänst, disk,
+fast adress, lagring). PE Portal kör redan på DigitalOcean i Frankfurt, och servern
+`pe-portal-dev` (2 GB minne, 50 GB disk) hade 1,3 GB ledigt minne och 44 GB ledig disk.
+Inloggningen med Microsoft kräver inte Azure — Entra-registreringen är gratis (B-011).
+
+**Beslut:**
+
+- **Dev** körs på `pe-portal-dev`, bredvid PE Portal. Ingen extra kostnad. Egen
+  systemanvändare (`pdfstudio`), egen port (8010), egen deploy-användare (`pdfdeploy`) och
+  egna databaser i serverns PostgreSQL. En växlingsfil på 2 GB läggs till.
+- **Produktionen** får en egen droplet, Basic 2 GB / 1 vCPU, **12 USD per månad**
+  (digitalocean.com/pricing/droplets, 2026-11-17), med PostgreSQL och filerna lokalt på servern.
+- **Backup** dumpas före varje migration och varje natt, och kopieras till PE Portals
+  backup-bucket i Spaces under en egen mapp. Backup finns först när återställningen är provad (F0-12).
+
+**Konsekvens:** utläggningen från PE Portal används nästan oförändrad. Filerna lagras lokalt
+(`STORAGE_MODE=local`); Azure Blob-stödet i koden ligger kvar men används inte. Datan ligger i
+Tyskland (EU), inte i Sverige. Blir dev-servern trång flyttas PDF-studio till en egen droplet
+(12 USD). En kraschad process på dev drabbar inte PE Portal, men minnet delas.
+
+## B-011 — Microsoft-inloggning för en organisation, som PE Portal (B-055)
+
+**Datum:** 2026-11-17 · **Status:** GÄLLER
+
+B-007 sade att Entra-appen skulle ta emot flera organisationer. Så länge bara Pure Energys
+katalog används är det en onödig öppning: vem som helst med ett Microsoft-konto kan nå
+inloggningen, och appen måste lita på att bolagsregistret stoppar dem.
+
+**Beslut:** Entra-appen registreras för en organisation (single-tenant), som PE Portal.
+Med `ENTRA_TENANT_ID` satt loggar appen in mot just den katalogen och nekar en inloggning
+vars katalog-id är ett annat. Adressen är fortfarande en för alla (B-007 i övrigt gäller).
+
+**Konsekvens:** gratis, och samma uppsättning som PE Portal. När ett andra bolag ska in
+ändras registreringen till flera organisationer och `ENTRA_TENANT_ID` tas bort — ett nytt beslut.
 
 ## B-005 — Claude Opus 5.5 för all AI-tolkning
 

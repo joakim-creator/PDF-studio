@@ -30,7 +30,7 @@ Användarna är vana vid Office men inte vid PDF-verktyg. Det vanligaste ska gå
 
 ## 4. Krav som styr tekniken
 
-- **Region:** Azure, Sweden Central. All data i EU.
+- **Region:** DigitalOcean, Frankfurt (B-010). All data i EU.
 - **Personuppgifter:** fakturor, avtal och personnummer förekommer. Kryptering vid lagring och
   överföring, gallring, händelselogg, DPA med Anthropic och leverantören av talsyntes.
 - **Plattform:** webbapp som fungerar fullt ut på mobil, med kameran som skanner.
@@ -70,7 +70,7 @@ Masterdatabasen har bara bolagsregistret (`tenants`). Varje bolag har en egen da
 | Svensk talsyntes (väljs i lyssningstest: Azure AI Speech, ElevenLabs eller Google) | Podcast, fas 6 | Pris okänt tills valet är gjort |
 | Microsoft Entra ID | Inloggning | Ingår i Microsoft 365 |
 | Microsoft Graph | SharePoint och OneDrive, fas 7 | Ingår |
-| Azure (App Service eller VM, PostgreSQL, Blob Storage) | Drift | Beräknas i fas 0 |
+| DigitalOcean (droplet för produktionen; dev delar `pe-portal-dev`) | Drift | 12 USD/månad för produktionen, dev 0 kr extra (B-010) |
 | GlitchTip (EU) | Felrapportering | Tak per timme i koden och på kontot |
 
 ## 8. Vad "klart" betyder
@@ -83,7 +83,7 @@ gjord, återställningsprovet har en rad, och appen används skarpt på Pure Ene
 
 | Fas | Innehåll | Krav | Version |
 |---|---|---|---|
-| 0 Fundament | Projektmallens grund, Flask, Azure, CI | F0-01–F0-21 | 0.0.x |
+| 0 Fundament | Projektmallens grund, Flask, DigitalOcean, CI | F0-01–F0-21 | 0.0.x |
 | 1 Visa och sidor | Uppladdning, visning, slå ihop, dela, rotera, versioner | K1–K4 | 0.1.0 |
 | 2 Kommentarer och bild | PDF-annoteringar, export till bild | K5–K6 | 0.2.0 |
 | 3 AI och OCR | Frågor med sidhänvisning, sökbart textlager, utgiftstak | K8–K9 | 0.3.0 |

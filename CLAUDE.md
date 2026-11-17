@@ -6,7 +6,7 @@ gälla alltid. Regler som bara gäller ibland hör hemma i `docs/`, inte här.
 ## Projektet
 
 PDF-studio: molnapp för PDF (slå ihop, dela, kommentera, exportera, AI). Python 3.12, Flask 3,
-PostgreSQL med en databas per bolag, Azure Sweden Central. Förlaga för kod: `C:\Users\JoakimHansson\Claude\pe-portal`.
+PostgreSQL med en databas per bolag, DigitalOcean Frankfurt (B-010). Förlaga för kod: `C:\Users\JoakimHansson\Claude\pe-portal`.
 
 - **Inga AGPL-bibliotek** (inte PyMuPDF, inte Ghostscript). Licenskontrollera varje nytt beroende ([B-003](docs/beslutslogg.md)).
 - **Originalet rörs aldrig.** Varje ändring av ett dokument blir en ny version.
