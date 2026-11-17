@@ -37,6 +37,8 @@ def create_app(config: dict[str, Any] | None = None) -> Flask:
     observability.init_app(app)
     security.init_app(app)
     csrf.init_app(app)
+    from core import storage
+    app.extensions['pdfstudio_storage'] = storage.from_environment(os.path.join(app.instance_path, 'filer'))
 
     from core import cli, session
     from core.auth import auth_bp

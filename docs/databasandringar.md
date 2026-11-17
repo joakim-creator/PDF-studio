@@ -32,6 +32,7 @@ Migrationerna körs med `core/migrations.py`, som vägrar köra en migration uta
 | master/202611162200_baslinje | F0-04 | Bolagsregistret `tenants` | – | – | R-001 |
 | tenant/202611162200_baslinje | F0-04, F0-05 | Användare, tillägg, dokument, versioner, delningar, kommentarer, jobb, AI-kostnader, händelselogg | – | – | R-002 |
 | tenant/202611170200_inloggning | F0-13 | Inloggningsloggen `login_events`; `users.totp_enabled_at`, `users.last_login_at` | – | – | R-003 |
+| tenant/202611170400_aterstall_version | F1-08 | Versionskällan `restore` i `ck_document_versions_source` | – | – | R-004 |
 
 ## Återställningar
 
@@ -71,3 +72,15 @@ ALTER TABLE users DROP COLUMN totp_enabled_at;
 
 Inloggningsloggen försvinner, och alla lokala konton måste registrera engångskoden på
 nytt. Koden från F0-13 måste tas tillbaka först, annars fallerar inloggningen.
+
+**R-004** — tenant/202611170400_aterstall_version
+
+```sql
+ALTER TABLE document_versions DROP CONSTRAINT ck_document_versions_source;
+ALTER TABLE document_versions ADD CONSTRAINT ck_document_versions_source CHECK (source IN ('upload', 'merge', 'split', 'pages', 'annotate', 'ocr', 'compress'));
+```
+
+Faller om någon version redan har källan `restore`. Kontrollera först med
+`SELECT count(*) FROM document_versions WHERE source = 'restore';` — finns det rader
+avgör systemägaren vad som ska göras med dem; versioner raderas aldrig i smyg.
+Koden som återställer versioner (F1-08) måste tas tillbaka först.

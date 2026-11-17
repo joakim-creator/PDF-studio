@@ -49,14 +49,14 @@ Mål: flödena Slå ihop och Dela fungerar som i prototypen. Krav K1–K4.
 
 | ID | Uppgift | Status | Anteckning |
 |---|---|---|---|
-| F1-01 | Uppladdning till Blob Storage, filtyp kontrolleras på innehållet, gräns 32 MB | TODO | backend-grund 12 |
-| F1-02 | `documents` och `document_versions`; originalet rörs aldrig | TODO | |
+| F1-01 | Uppladdning till Blob Storage, filtyp kontrolleras på innehållet, gräns 32 MB | KLAR | `core/storage.py` (lokalt och Azure Blob, provat mot Azurite i CI), `core/documents.py`: filtyp på innehållet, 32 MB. Formuläret kommer med F1-03 |
+| F1-02 | `documents` och `document_versions`; originalet rörs aldrig | KLAR | Originalet rörs aldrig: varje ändring är en ny version med förälder, under radlås |
 | F1-03 | Startsidan enligt prototypen: uppladdning, fem uppgifter, senaste dokument | TODO | |
 | F1-04 | Visning med pdf.js: miniatyrer, zoom, sök | TODO | K1 |
-| F1-05 | Slå ihop med pikepdf, ordning, namn på ny fil | TODO | K2 |
-| F1-06 | Dela: markerade sidor, en fil per sida, intervall | TODO | K3 |
-| F1-07 | Rotera, ta bort och infoga sidor (även tom sida och sidor från annan fil) | TODO | K4 |
-| F1-08 | Versionshistorik och återställning av en version | TODO | |
+| F1-05 | Slå ihop med pikepdf, ordning, namn på ny fil | PÅGÅR | Logiken klar och provad (`core/pdfops.py`, `documents.merge`). Kvar: sidan |
+| F1-06 | Dela: markerade sidor, en fil per sida, intervall | PÅGÅR | Logiken klar och provad (markerade, intervall, en per sida). Kvar: sidan |
+| F1-07 | Rotera, ta bort och infoga sidor (även tom sida och sidor från annan fil) | PÅGÅR | Logiken klar och provad (rotera, ta bort, tom sida, sidor ur annan fil). Kvar: sidan |
+| F1-08 | Versionshistorik och återställning av en version | PÅGÅR | Logiken klar och provad; återställning blir en ny version (migration `202611170400_aterstall_version`). Kvar: sidan |
 
 ## Fas 2 — Kommentarer och bild (0.2.0)
 

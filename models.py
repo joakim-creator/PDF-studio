@@ -39,7 +39,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from core.timeutil import utcnow
 from extensions import db
 
-VERSION_SOURCES = ('upload', 'merge', 'split', 'pages', 'annotate', 'ocr', 'compress')
+VERSION_SOURCES = ('upload', 'merge', 'split', 'pages', 'annotate', 'ocr', 'compress', 'restore')
 ANNOTATION_KINDS = ('highlight', 'underline', 'freetext', 'note', 'ink', 'stamp')
 JOB_KINDS = ('ocr', 'word', 'excel', 'podcast', 'compress', 'image')
 JOB_STATUSES = ('queued', 'running', 'done', 'failed')

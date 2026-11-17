@@ -2,6 +2,7 @@
 Migrationerna mot riktig PostgreSQL (F0-04, F0-08). Körs alltid i CI (REQUIRE_PG=1).
 """
 
+import re
 import shutil
 from collections.abc import Callable
 from pathlib import Path
@@ -89,6 +90,19 @@ def test_radlaset_laser_om_det_sessionen_redan_last(pg_database: Callable[[], st
         assert locked is stale
         assert locked.status == 'running'
         first.rollback()
+    engine.dispose()
+
+
+def test_versionskallorna_i_databasen_ar_modellens(pg_database: Callable[[], str]) -> None:
+    """Villkoret på versionskällan finns bara i migrationerna; schemajämförelsen ser kolumner, inte villkor."""
+    from models import VERSION_SOURCES
+    engine = create_engine(pg_database())
+    migrations.migrate(engine, 'tenant')
+    with engine.connect() as conn:
+        definition = conn.exec_driver_sql(
+            "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_document_versions_source'"
+        ).scalar_one()
+    assert sorted(re.findall(r"'(\w+)'", definition)) == sorted(VERSION_SOURCES)
     engine.dispose()
 
 

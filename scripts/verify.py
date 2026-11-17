@@ -10,6 +10,11 @@ Databasproven (från F0-04) kräver PostgreSQL. Sätt PG_TEST_URL, t.ex. mot en 
     docker run -d --name pdf-studio-pg-test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=test -p 127.0.0.1:5453:5432 postgres:16
     PG_TEST_URL=postgresql://postgres:test@127.0.0.1:5453/test
 
+Fillagringen i Azure provas mot emulatorn Azurite (F1-01):
+
+    docker run -d --name pdf-studio-azurite -p 127.0.0.1:10000:10000 mcr.microsoft.com/azure-storage/azurite:3.33.0 azurite-blob --blobHost 0.0.0.0
+    AZURITE_CONNECTION_STRING=<se .github/workflows/verify.yml; emulatorns publicerade standardnyckel>
+
 Utan PG_TEST_URL hoppas de proven över, och det sägs tydligt. I CI körs skriptet med --require-pg, och då faller
 kedjan i stället — ett prov som tyst hoppas över bevisar inget.
 

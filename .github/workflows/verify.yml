@@ -24,8 +24,17 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # Fillagringen i Azure provas mot Microsofts emulator (F1-01). Nyckeln nedan är emulatorns publicerade
+      # standardnyckel, ingen hemlighet.
+      azurite:
+        image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+        ports:
+          - 10000:10000
+        options: --entrypoint azurite-blob
     env:
       PG_TEST_URL: postgresql://postgres:test@localhost:5432/test
+      AZURITE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;
+      REQUIRE_AZURITE: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

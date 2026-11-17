@@ -27,6 +27,8 @@ os.environ['PDF_LOG_REQUESTS'] = '0'
 os.environ['ENTRA_CLIENT_ID'] = 'prov-klient'          # Microsoft-inloggningen prövas alltid mot låtsasklienten
 os.environ['ENTRA_CLIENT_SECRET'] = 'prov-hemlighet'
 os.environ.pop('GLITCHTIP_DSN', None)
+os.environ['STORAGE_MODE'] = 'local'                    # proven sparar alltid lokalt, i en tillfällig mapp
+os.environ['STORAGE_FOLDER'] = str(_TMP / 'filer')
 os.environ.pop('TOTP_KEY', None)
 
 from typing import Any  # noqa: E402
@@ -79,7 +81,7 @@ class TestTenant:
     entra_tenant_id: str
 
     def context(self) -> AbstractContextManager[None]:
-        return tenant_context(self.database_url)
+        return tenant_context(self)   # bär både databasen och slug (lagringsnycklarna)
 
 
 @pytest.fixture

@@ -10,3 +10,7 @@ Flask-WTF==1.2.1          # BSD-3; CSRF-skydd på formulären (F0-13)
 msal==1.38.0              # MIT; Microsoft-inloggning via Entra (F0-13)
 cryptography==50.0.2      # Apache-2.0/BSD; Fernet för engångskodernas nycklar (F0-13)
 gunicorn==26.2.0; sys_platform != "win32"   # MIT; webbservern i dev och prod (F0-20)
+pikepdf==9.11.0           # MPL-2.0; slå ihop, dela, rotera, sidor (F1-05–F1-07). Inte AGPL (B-003)
+pypdfium2==4.30.0         # Apache-2.0/BSD-3 (PDFium); sidor till bild, text (F1-04, F2-03). 4.30.1 är tillbakadragen
+Pillow==13.0.0            # MIT-CMU; bilderna från pypdfium2
+azure-storage-blob==12.24.1   # MIT; fillagringen i Azure (F1-01)
