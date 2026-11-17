@@ -125,4 +125,4 @@ Var noga med att notera **hur** felet upptäcktes. Ett fel som ingen signal fån
 
 | ID | Uppgift | Upptäckt | Status |
 |---|---|---|---|
-| U-001 | | | TODO |
+| U-001 | PDFium är inte trådsäkert: samtidiga miniatyrer fällde processen (0xC0000374). Lås runt all PDFium-användning, prov med åtta trådar och vaktprov | Upptäckt 2026-11-17 vid visuell kontroll i webbläsaren — inget prov fångade det, eftersom testklienten gör ett anrop i taget | KLAR |

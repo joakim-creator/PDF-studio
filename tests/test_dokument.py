@@ -173,6 +173,21 @@ def test_den_som_inte_ser_dokumentet_kan_inte_andra_det(ctx: TestTenant) -> None
         documents.change(_user('erik'), offert, lambda d: d)
 
 
+def test_samtidiga_renderingar_fran_flera_tradar() -> None:
+    """Dokumentvyn hämtar flera miniatyrer samtidigt, och gunicorn kör flera trådar. Utan låset korrumperade PDFium
+    minnet och fällde processen (core/pdfops.py)."""
+    from concurrent.futures import ThreadPoolExecutor
+    data = pdfs.make('T', 6)
+
+    def work(n: int) -> tuple[bool, str]:
+        page = n % 6 + 1
+        return pdfops.render_png(data, page, 72).startswith(b'\x89PNG'), pdfops.text(data, page).strip()
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(work, range(48)))
+    assert results == [(True, f'T{n % 6 + 1}') for n in range(48)]
+
+
 def test_sidor_som_bild(ctx: TestTenant) -> None:
     data = pdfs.make('P', 2)
     small, large = pdfops.render_png(data, 1, 72), pdfops.render_png(data, 2, 150)

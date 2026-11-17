@@ -15,7 +15,7 @@
 <form method="get" action="{{ url_for('pages.document', document_id=doc.id) }}" class="form-row search-row" role="search">
   <input type="hidden" name="v" value="{{ version.version_no }}">
   <label>Sök i dokumentet <input name="sok" value="{{ query }}" placeholder="Ord eller belopp"></label>
-  <button class="btn btn-ghost">Sök</button>
+  <button class="btn btn-secondary">Sök</button>
   {% if query %}<p class="muted" role="status">{% if hits %}”{{ query }}” finns på {{ 'sidan' if hits|length == 1 else 'sidorna' }} {{ hits|join(', ') }}.{% else %}Ingen träff på ”{{ query }}”. Skannade sidor blir sökbara med text i bild (fas 3).{% endif %}</p>{% endif %}
 </form>
 

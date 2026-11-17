@@ -7,6 +7,10 @@ rendera sidor till bild. Inga AGPL-bibliotek (B-003). Sidnummer är 1-baserade, 
 
 import io
 import re
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Any
 
 import pikepdf
 
@@ -133,41 +137,49 @@ def insert_from(data: bytes, other: bytes, after: int, pages: list[int]) -> byte
         return _save(pdf)
 
 
-def render_png(data: bytes, page: int, dpi: int = 72) -> bytes:
-    """Sidan som PNG. 72 dpi för miniatyrer, 150 eller 300 för export (F2-03)."""
+# ── PDFium ───────────────────────────────────────────────────────────────────
+# PDFium är inte trådsäkert. Två samtidiga renderingar i samma process korrumperar minnet och fäller hela
+# processen (sågs 2026-11-17: dokumentvyn hämtar fyra miniatyrer samtidigt, utvecklingsservern dog med 0xC0000374;
+# gunicorn kör fyra trådar per process). Allt som rör PDFium går därför genom `_pdfium()`, som håller ett lås.
+# Vaktprov i tests/test_vakt.py: `PdfDocument(` får bara förekomma här.
+
+_PDFIUM_LOCK = threading.Lock()
+
+
+@contextmanager
+def _pdfium(data: bytes) -> Iterator[Any]:
     import pypdfium2 as pdfium
     if not data.startswith(PDF_MAGIC):
         raise PdfError('Filen är inte en PDF.')
-    doc = pdfium.PdfDocument(data)
-    try:
+    with _PDFIUM_LOCK:
+        doc = pdfium.PdfDocument(data)
+        try:
+            yield doc
+        finally:
+            doc.close()
+
+
+def render_png(data: bytes, page: int, dpi: int = 72) -> bytes:
+    """Sidan som PNG. 72 dpi för miniatyrer, 150 eller 300 för export (F2-03)."""
+    with _pdfium(data) as doc:
         _check_pages([page], len(doc))
         image = doc[page - 1].render(scale=dpi / 72).to_pil()
-        out = io.BytesIO()
-        image.save(out, format='PNG')
-        return out.getvalue()
-    finally:
-        doc.close()
+    out = io.BytesIO()
+    image.save(out, format='PNG')
+    return out.getvalue()
 
 
 def search(data: bytes, query: str) -> list[int]:
     """Sidorna (1-baserade) där texten förekommer, utan hänsyn till versaler. Skannade sidor hittas efter OCR (F3-05)."""
-    import pypdfium2 as pdfium
     needle = ' '.join(query.split()).casefold()
     if not needle:
         return []
-    doc = pdfium.PdfDocument(data)
-    try:
+    with _pdfium(data) as doc:
         return [n for n in range(1, len(doc) + 1)
                 if needle in ' '.join(str(doc[n - 1].get_textpage().get_text_bounded()).split()).casefold()]
-    finally:
-        doc.close()
 
 
 def text(data: bytes, page: int) -> str:
     """Sidans text (för prov och sökning). Skannade sidor ger tom text tills OCR finns (F3-05)."""
-    import pypdfium2 as pdfium
-    doc = pdfium.PdfDocument(data)
-    try:
+    with _pdfium(data) as doc:
         return str(doc[page - 1].get_textpage().get_text_bounded())
-    finally:
-        doc.close()

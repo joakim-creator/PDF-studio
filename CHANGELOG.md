@@ -33,6 +33,11 @@ Rubriker som används: `Tillagt`, `Ändrat`, `Rättat`, `Borttaget`, `Säkerhet`
 - Startsidan enligt prototypen, dokumentvyn med miniatyrer och versioner, och sidorna Slå ihop och Dela [F1-03, F1-04]
 - Sida i större format med zoom och bläddring, och sökning i dokumentens text [F1-04]
 
+### Rättat
+
+- Samtidiga sidbilder kunde fälla servern: PDFium används nu bara under ett lås [U-001]
+- Meddelandet "Logga in för att fortsätta" visas neutralt, inte som en bekräftelse [F0-13]
+
 ### Ändrat
 
 - Modellerna har typade kolumner (`Mapped`); schemat är oförändrat [F0-17]

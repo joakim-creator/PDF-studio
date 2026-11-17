@@ -66,6 +66,7 @@ def init_app(app: Flask) -> None:
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Logga in för att fortsätta.'
+    login_manager.login_message_category = 'info'
 
     @app.before_request
     def _tenant_from_session() -> None:

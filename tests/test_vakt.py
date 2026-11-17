@@ -118,6 +118,16 @@ def test_radlas_tas_bara_via_lock() -> None:
     assert offenders == []
 
 
+def test_pdfium_anvands_bara_genom_laset() -> None:
+    """PDFium är inte trådsäkert; samtidiga renderingar fällde processen (core/pdfops.py, `_pdfium`)."""
+    uses = [(str(p.relative_to(ROOT)), src.count('pdfium.PdfDocument(')) for p, src in _app_sources().items()
+            if 'pdfium.PdfDocument(' in src]
+    assert uses == [(str(Path('core') / 'pdfops.py'), 1)]
+    src = (ROOT / 'core' / 'pdfops.py').read_text(encoding='utf-8')
+    block = src[src.index('def _pdfium('):src.index('def render_png(')]
+    assert block.index('with _PDFIUM_LOCK:') < block.index('pdfium.PdfDocument(')
+
+
 def test_konton_raderas_aldrig() -> None:
     pattern = re.compile(r'session\.delete\(\s*\w*user\w*\s*\)|delete\(User\)', re.IGNORECASE)
     offenders = [str(p.relative_to(ROOT)) for p, src in _app_sources().items() if pattern.search(src)]
