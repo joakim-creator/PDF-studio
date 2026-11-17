@@ -62,6 +62,19 @@ som i PE Portal. Lagringsnycklar `<bolag>/<område>/<uuid>.<ändelse>`.
 **Konsekvens:** migrationer körs mot varje bolagsdatabas, och proven måste visa att ett bolag
 inte ser ett annat bolags data.
 
+## B-006 — Användarna ligger i bolagens databaser
+
+**Datum:** 2026-11-16 · **Status:** GÄLLER
+
+Specifikationen sade först att masterdatabasen skulle ha bolag, användare och roller.
+PE Portal har användarna i varje bolags egen databas, och det håller isär bolagen helt.
+
+**Beslut:** masterdatabasen har bara bolagsregistret (`tenants`, med Entra-katalogens id).
+Användare, tillägg och allt annat ligger i bolagets databas.
+
+**Konsekvens:** en person som arbetar i två bolag har två konton. Vid inloggning slås bolaget
+upp via Entra-katalogens id innan användaren kan hittas (F0-13).
+
 ## B-005 — Claude Opus 5.5 för all AI-tolkning
 
 **Datum:** 2026-11-16 · **Status:** GÄLLER

@@ -23,17 +23,39 @@ Kontrollera alltid vilken miljö som är länkad innan något körs.
 
 ## Register
 
+Migrationerna körs med `core/migrations.py`, som vägrar köra en migration utan
+`.down.sql`, stoppar om en körd migration har ändrats och låser varje fil i
+`migrations/checksums.txt` (vaktprov i `tests/test_vakt.py`).
+
 | Migration | Uppgift | Innehåll | Körd i dev | Körd i prod | Återställning |
 |---|---|---|---|---|---|
-| | | | | | |
+| master/202611162200_baslinje | F0-04 | Bolagsregistret `tenants` | – | – | R-001 |
+| tenant/202611162200_baslinje | F0-04, F0-05 | Användare, tillägg, dokument, versioner, delningar, kommentarer, jobb, AI-kostnader, händelselogg | – | – | R-002 |
 
 ## Återställningar
 
-**R-001** — <namn>
+**R-001** — master/202611162200_baslinje
 
 ```sql
--- SQL som tar tillbaka ändringen
+DROP TABLE tenants;
 ```
 
-Vad som slutar fungera när återställningen körts, och vad som därutöver måste
-göras i koden.
+Inga bolag går att slå upp; appen kan inte välja databas för någon inloggning.
+Återställs bara på en databas utan bolag (dev innan första bolaget lagts in).
+
+**R-002** — tenant/202611162200_baslinje
+
+```sql
+DROP TABLE ai_usage;
+DROP TABLE jobs;
+DROP TABLE annotations;
+DROP TABLE document_versions;
+DROP TABLE document_shares;
+DROP TABLE user_permissions;
+DROP TABLE documents;
+DROP TABLE audit_events;
+DROP TABLE users;
+```
+
+Tar bort allt i bolagets databas. Får bara köras på en bolagsdatabas utan
+riktiga dokument. Ta backup först, och kontrollera att det är dev.

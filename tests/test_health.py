@@ -6,11 +6,6 @@ from flask import Flask
 from app import create_app
 
 
-@pytest.fixture
-def app() -> Flask:
-    return create_app({'TESTING': True, 'SECRET_KEY': 'test'})
-
-
 def test_health_svarar_ok(app: Flask) -> None:
     res = app.test_client().get('/health')
     assert res.status_code == 200
@@ -39,3 +34,9 @@ def test_appen_startar_inte_utan_secret_key(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.delenv('SECRET_KEY', raising=False)
     with pytest.raises(RuntimeError, match='SECRET_KEY'):
         create_app()
+
+
+def test_appen_startar_inte_utan_masterdatabas(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv('MASTER_DATABASE_URL', raising=False)
+    with pytest.raises(RuntimeError, match='MASTER_DATABASE_URL'):
+        create_app({'TESTING': True})

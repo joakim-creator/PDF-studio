@@ -13,11 +13,16 @@ max-complexity = 20
 
 [tool.mypy]
 python_version = "3.12"
-files = ["app.py", "core", "scripts", "tests"]
+files = ["app.py", "extensions.py", "models.py", "core", "scripts", "tests"]
 ignore_missing_imports = true
 
+# core/migrations.py är kopierad från PE Portal utan typer; typas när den ändras.
+[[tool.mypy.overrides]]
+module = ["core.migrations"]
+disallow_untyped_defs = false
+
 [tool.coverage.run]
-source = ["app", "core"]
+source = ["app", "extensions", "models", "core"]
 omit = ["tests/*"]
 
 [tool.pytest.ini_options]

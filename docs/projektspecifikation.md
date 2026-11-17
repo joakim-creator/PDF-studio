@@ -41,18 +41,20 @@ Användarna är vana vid Office men inte vid PDF-verktyg. Det vanligaste ska gå
 
 ## 5. Datamodell
 
-Masterdatabas för bolag, användare och roller. En databas per bolag med:
+Masterdatabasen har bara bolagsregistret (`tenants`). Varje bolag har en egen databas med
+(B-006; definitionen finns i `models.py`):
 
 | Tabell | Innehåll |
 |---|---|
-| `documents` | Ett dokument per uppladdad fil: namn, ägare, skapad, gallras |
-| `document_versions` | En rad per version: lagringsnyckel `<bolag>/documents/<uuid>.pdf`, antal sidor, skapad av, källa (uppladdning, ihopslagning, delning, kommentar) |
-| `annotations` | Kommentarer och markeringar per version och sida, som skrivs in i PDF:en vid export |
-| `jobs` | Långa jobb (OCR, Word, podcast): status, kostnad, felmeddelande |
-| `ai_usage` | Kostnad per anrop och månad, för utgiftstaket |
-| `audit_events` | Vem som gjorde vad och när (Projektmallen, F0-15) |
-
-Ritas ut i detalj i fas 0 (F0-04).
+| `users` | Användare: Entra-id, eller lösenord och engångskod för reservkonton; inaktiveras, raderas aldrig |
+| `user_permissions` | Uttryckliga tillägg, till exempel `dokument.radera` |
+| `documents` | Ett dokument: titel, ägare, papperskorg, gallring |
+| `document_versions` | En rad per version, aldrig ändrad: förälder, lagringsnyckel `<bolag>/documents/<uuid>.pdf`, sha256, sidor, storlek, källa |
+| `document_shares` | Dokument som delats med en kollega |
+| `annotations` | Kommentarer och markeringar per version och sida |
+| `jobs` | Långa jobb (OCR, Word, Excel, podcast): status, kostnad, fel |
+| `ai_usage` | Kostnad per AI-anrop, underlag för utgiftstaket |
+| `audit_events` | Vem som gjorde vad och när |
 
 ## 6. Åtkomstregler
 

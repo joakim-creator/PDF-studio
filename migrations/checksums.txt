@@ -1,0 +1,6 @@
+# Låsta migrationer: <fil> <sha256 med LF-radslut>. En rad läggs till per ny fil.
+# Befintliga rader ändras aldrig — se tests/test_vakt.py.
+master/202611162200_baslinje.down.sql 9685ab7518c104b89ed14fa535b48ae7963ddb4a76a9c96fca120b6a5cdb58ba
+master/202611162200_baslinje.sql a0aa89a8875598aed9178822b41612e2586afeee8fcf06e691552b6cca202489
+tenant/202611162200_baslinje.down.sql a735753c171a04b90a0e8511aa4b5086255c07e7ef602c1a3bf360c6e7c906e0
+tenant/202611162200_baslinje.sql 26353f79c20ea812481363c0e74933fc6cb1c64d38d1cac8c7305d166c809fc0
