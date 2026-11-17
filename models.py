@@ -11,15 +11,19 @@ Regler som schemat själv upprätthåller:
 - Varje främmande nyckel har ett index (vaktprov i tests/test_vakt.py).
 
 Genererad SQL för migrationerna: migrations/tenant/. Ändras modellerna krävs en ny migration — vaktprovet
-tests/test_schema_pg.py faller annars.
+tests/test_schema_pg.py faller annars. Varje kolumn anger `nullable` uttryckligen, så att typannoteringen aldrig
+ändrar schemat.
 """
+
+from datetime import datetime
+from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
     CheckConstraint,
-    Column,
     DateTime,
     ForeignKey,
     Index,
@@ -29,6 +33,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.orm import Mapped, mapped_column
 
 from core.timeutil import utcnow
 from extensions import db
@@ -38,13 +43,11 @@ ANNOTATION_KINDS = ('highlight', 'underline', 'freetext', 'note', 'ink', 'stamp'
 JOB_KINDS = ('ocr', 'word', 'excel', 'podcast', 'compress', 'image')
 JOB_STATUSES = ('queued', 'running', 'done', 'failed')
 
+TS = DateTime(timezone=True)
+
 
 def _in(column: str, values: tuple[str, ...]) -> str:
     return f"{column} IN ({', '.join(repr(v) for v in values)})"
-
-
-def _ts(**kwargs):  # type: ignore[no-untyped-def]
-    return Column(DateTime(timezone=True), **kwargs)
 
 
 class User(db.Model):  # type: ignore[name-defined]
@@ -53,18 +56,18 @@ class User(db.Model):  # type: ignore[name-defined]
     __tablename__ = 'users'
     __table_args__ = (CheckConstraint('failed_logins >= 0', name='ck_users_failed_logins'),)
 
-    id = Column(Integer, primary_key=True)
-    username = Column(String(120), unique=True, nullable=False)
-    display_name = Column(String(200), nullable=False)
-    email = Column(String(255))
-    entra_oid = Column(String(36), unique=True)
-    password_hash = Column(String(255))
-    totp_secret = Column(Text)  # krypterad (Fernet), nyckeln i miljön
-    is_admin = Column(Boolean, nullable=False, default=False)
-    active = Column(Boolean, nullable=False, default=True)
-    failed_logins = Column(Integer, nullable=False, default=0)
-    locked_until = _ts()
-    created_at = _ts(nullable=False, default=utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    entra_oid: Mapped[str | None] = mapped_column(String(36), unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # krypterad (Fernet), nyckeln i miljön
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    failed_logins: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(TS, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
 
 
 class UserPermission(db.Model):  # type: ignore[name-defined]
@@ -72,10 +75,10 @@ class UserPermission(db.Model):  # type: ignore[name-defined]
 
     __tablename__ = 'user_permissions'
 
-    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    permission = Column(String(64), primary_key=True)
-    granted_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    granted_at = _ts(nullable=False, default=utcnow)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), primary_key=True)
+    permission: Mapped[str] = mapped_column(String(64), primary_key=True)
+    granted_by: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    granted_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
 
 
 class Document(db.Model):  # type: ignore[name-defined]
@@ -83,12 +86,12 @@ class Document(db.Model):  # type: ignore[name-defined]
 
     __tablename__ = 'documents'
 
-    id = Column(Integer, primary_key=True)
-    title = Column(String(255), nullable=False)
-    owner_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    created_at = _ts(nullable=False, default=utcnow)
-    deleted_at = _ts()      # i papperskorgen; töms efter 7 dagar
-    purge_after = _ts()     # gallras då (F0-16)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
+    deleted_at: Mapped[datetime | None] = mapped_column(TS, nullable=True)    # i papperskorgen; töms efter 7 dagar
+    purge_after: Mapped[datetime | None] = mapped_column(TS, nullable=True)   # gallras då (F0-16)
 
 
 class DocumentVersion(db.Model):  # type: ignore[name-defined]
@@ -104,17 +107,18 @@ class DocumentVersion(db.Model):  # type: ignore[name-defined]
         CheckConstraint('(version_no = 1) = (parent_version_id IS NULL)', name='ck_document_versions_parent'),
     )
 
-    id = Column(Integer, primary_key=True)
-    document_id = Column(Integer, ForeignKey('documents.id'), nullable=False, index=True)
-    version_no = Column(Integer, nullable=False)
-    parent_version_id = Column(Integer, ForeignKey('document_versions.id'), index=True)
-    storage_key = Column(String(255), unique=True, nullable=False)   # <bolag>/documents/<uuid>.pdf
-    sha256 = Column(String(64), nullable=False)
-    page_count = Column(Integer, nullable=False)
-    size_bytes = Column(BigInteger, nullable=False)
-    source = Column(String(16), nullable=False)
-    created_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    created_at = _ts(nullable=False, default=utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    document_id: Mapped[int] = mapped_column(Integer, ForeignKey('documents.id'), nullable=False, index=True)
+    version_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_version_id: Mapped[int | None] = mapped_column(Integer, ForeignKey('document_versions.id'),
+                                                          nullable=True, index=True)
+    storage_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)  # <bolag>/documents/<uuid>.pdf
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    page_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    source: Mapped[str] = mapped_column(String(16), nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
 
 
 class DocumentShare(db.Model):  # type: ignore[name-defined]
@@ -122,10 +126,10 @@ class DocumentShare(db.Model):  # type: ignore[name-defined]
 
     __tablename__ = 'document_shares'
 
-    document_id = Column(Integer, ForeignKey('documents.id'), primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True, index=True)
-    granted_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    granted_at = _ts(nullable=False, default=utcnow)
+    document_id: Mapped[int] = mapped_column(Integer, ForeignKey('documents.id'), primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), primary_key=True, index=True)
+    granted_by: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    granted_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
 
 
 class Annotation(db.Model):  # type: ignore[name-defined]
@@ -137,14 +141,14 @@ class Annotation(db.Model):  # type: ignore[name-defined]
         CheckConstraint(_in('kind', ANNOTATION_KINDS), name='ck_annotations_kind'),
     )
 
-    id = Column(Integer, primary_key=True)
-    version_id = Column(Integer, ForeignKey('document_versions.id'), nullable=False, index=True)
-    page = Column(Integer, nullable=False)
-    kind = Column(String(16), nullable=False)
-    geometry = Column(JSON, nullable=False)   # rektangel eller punkter i PDF-koordinater
-    body = Column(Text)
-    author_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    created_at = _ts(nullable=False, default=utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    version_id: Mapped[int] = mapped_column(Integer, ForeignKey('document_versions.id'), nullable=False, index=True)
+    page: Mapped[int] = mapped_column(Integer, nullable=False)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    geometry: Mapped[Any] = mapped_column(JSON, nullable=False)   # rektangel eller punkter i PDF-koordinater
+    body: Mapped[str | None] = mapped_column(Text, nullable=True)
+    author_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
 
 
 class Job(db.Model):  # type: ignore[name-defined]
@@ -158,17 +162,18 @@ class Job(db.Model):  # type: ignore[name-defined]
         Index('ix_jobs_status_created', 'status', 'created_at'),
     )
 
-    id = Column(Integer, primary_key=True)
-    kind = Column(String(16), nullable=False)
-    status = Column(String(16), nullable=False, default='queued')
-    version_id = Column(Integer, ForeignKey('document_versions.id'), nullable=False, index=True)
-    result_version_id = Column(Integer, ForeignKey('document_versions.id'), index=True)
-    requested_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    cost_sek = Column(Numeric(12, 4), nullable=False, default=0)
-    error = Column(Text)
-    created_at = _ts(nullable=False, default=utcnow)
-    started_at = _ts()
-    finished_at = _ts()
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default='queued')
+    version_id: Mapped[int] = mapped_column(Integer, ForeignKey('document_versions.id'), nullable=False, index=True)
+    result_version_id: Mapped[int | None] = mapped_column(Integer, ForeignKey('document_versions.id'),
+                                                          nullable=True, index=True)
+    requested_by: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=0)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(TS, nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(TS, nullable=True)
 
 
 class AiUsage(db.Model):  # type: ignore[name-defined]
@@ -180,14 +185,14 @@ class AiUsage(db.Model):  # type: ignore[name-defined]
         CheckConstraint('cost_sek >= 0', name='ck_ai_usage_cost'),
     )
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    job_id = Column(Integer, ForeignKey('jobs.id'), index=True)
-    model = Column(String(64), nullable=False)
-    input_tokens = Column(Integer, nullable=False)
-    output_tokens = Column(Integer, nullable=False)
-    cost_sek = Column(Numeric(12, 4), nullable=False)
-    created_at = _ts(nullable=False, default=utcnow, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    job_id: Mapped[int | None] = mapped_column(Integer, ForeignKey('jobs.id'), nullable=True, index=True)
+    model: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow, index=True)
 
 
 class AuditEvent(db.Model):  # type: ignore[name-defined]
@@ -195,9 +200,9 @@ class AuditEvent(db.Model):  # type: ignore[name-defined]
 
     __tablename__ = 'audit_events'
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True)
-    area = Column(String(32), nullable=False)
-    action = Column(String(32), nullable=False)
-    description = Column(Text, nullable=False)
-    created_at = _ts(nullable=False, default=utcnow, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+    area: Mapped[str] = mapped_column(String(32), nullable=False)
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow, index=True)

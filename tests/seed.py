@@ -9,7 +9,7 @@ Personerna och vad de får:
 | bertil | vanlig | Faktura oktober | Offert Kund AB (delad) | – |
 | cecilia | administratör | – | – | inga (administratör får inget automatiskt) |
 | david | inaktiverad | Gammal rapport | – | – |
-| erik | vanlig | Hyresavtal L25 | – | dokument.radera |
+| erik | vanlig | Hyresavtal L25 | – | dokument.radera, konton.hantera |
 
 Lagringsnycklarna börjar med bolagets slug; mallen använder `mall` och fixturen byter till provbolagets.
 """
@@ -53,8 +53,9 @@ def seed_all(slug: str) -> None:
     db.session.add_all(users.values())
     db.session.flush()
 
-    db.session.add(UserPermission(user_id=users['erik'].id, permission='dokument.radera',
-                                  granted_by=users['cecilia'].id))
+    for permission in ('dokument.radera', 'konton.hantera'):
+        db.session.add(UserPermission(user_id=users['erik'].id, permission=permission,
+                                      granted_by=users['cecilia'].id))
 
     docs: dict[str, Document] = {}
     versions: dict[str, DocumentVersion] = {}

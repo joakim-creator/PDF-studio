@@ -12,9 +12,10 @@ Alla dokumentfrågor i appen ska gå via `visible_documents` och `get_document`,
 from sqlalchemy import or_, select
 from sqlalchemy.sql import Select
 
+from core.audit import log
 from core.timeutil import utcnow
 from extensions import db
-from models import AuditEvent, Document, DocumentShare, User, UserPermission
+from models import Document, DocumentShare, User, UserPermission
 
 DELETE_DOCUMENT = 'dokument.radera'
 
@@ -51,14 +52,14 @@ def get_document(user: User, document_id: int) -> Document:
     return doc
 
 
-def log(user: User | None, area: str, action: str, description: str) -> None:
-    db.session.add(AuditEvent(user_id=user.id if user else None, area=area, action=action, description=description))
+def require(user: User, permission: str, message: str) -> None:
+    if not has_permission(user, permission):
+        raise AccessDenied(message, permission)
 
 
 def delete_document(user: User, document_id: int) -> None:
     """Flytta ett dokument till papperskorgen. Kräver tillägget och loggas."""
     doc = get_document(user, document_id)
-    if not has_permission(user, DELETE_DOCUMENT):
-        raise AccessDenied('Du saknar tillägget för att radera dokument.', DELETE_DOCUMENT)
+    require(user, DELETE_DOCUMENT, 'Du saknar tillägget för att radera dokument.')
     doc.deleted_at = utcnow()
     log(user, 'dokument', 'radera', f'Dokument {doc.id} ”{doc.title}” flyttat till papperskorgen')

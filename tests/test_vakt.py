@@ -89,6 +89,33 @@ def test_inga_agpl_bibliotek() -> None:
     assert [n for n in names if n in AGPL_PACKAGES] == []
 
 
+def _app_sources() -> dict[Path, str]:
+    return {p: p.read_text(encoding='utf-8') for p in ROOT.rglob('*.py')
+            if 'venv' not in p.parts and 'tests' not in p.parts}
+
+
+def test_karnan_importerar_aldrig_en_modul() -> None:
+    """Beroendematrisen (backend-grund 11): core → models, extensions. Moduler (modules/, från fas 1) får importera
+    core, aldrig tvärtom och aldrig varandras privata delar."""
+    pattern = re.compile(r'^\s*(from|import)\s+modules\b', re.MULTILINE)
+    offenders = [str(p.relative_to(ROOT)) for p, src in _app_sources().items()
+                 if p.parent.name == 'core' and pattern.search(src)]
+    assert offenders == []
+
+
+def test_radlas_tas_bara_via_lock() -> None:
+    """`with_for_update` utan omläsning ger gamla värden (backend-grund 9). Bara core/locking.py får låsa."""
+    offenders = [str(p.relative_to(ROOT)) for p, src in _app_sources().items()
+                 if 'with_for_update' in src and p != ROOT / 'core' / 'locking.py']
+    assert offenders == []
+
+
+def test_konton_raderas_aldrig() -> None:
+    pattern = re.compile(r'session\.delete\(\s*\w*user\w*\s*\)|delete\(User\)', re.IGNORECASE)
+    offenders = [str(p.relative_to(ROOT)) for p, src in _app_sources().items() if pattern.search(src)]
+    assert offenders == []
+
+
 def test_dokument_hamtas_bara_via_atkomstkontrollen() -> None:
     """Alla frågor mot Document går via core.access, så att ingen sida glömmer vem som får se vad."""
     allowed = {ROOT / 'core' / 'access.py', ROOT / 'models.py'}

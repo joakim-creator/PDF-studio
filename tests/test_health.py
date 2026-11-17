@@ -9,7 +9,12 @@ from app import create_app
 def test_health_svarar_ok(app: Flask) -> None:
     res = app.test_client().get('/health')
     assert res.status_code == 200
-    assert res.get_json() == {'app': 'ok'}
+    body = res.get_json()
+    assert body['status'] == 'ok'
+    assert body['master'] == 'ok'
+    healthy, total = body['bolag'].split('/')
+    assert healthy == total
+    assert res.headers['Cache-Control'] == 'no-store'
 
 
 def test_varje_svar_bar_ett_arendenummer(app: Flask) -> None:

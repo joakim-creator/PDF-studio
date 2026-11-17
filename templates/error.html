@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="sv">
+{#- Felsidan (F0-11): fristående, utan stilmallar eller databas — den visas också när något annat är trasigt.
+    Inga interna detaljer; ärendenumret står i loggen och i felrapporten. -#}
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Något gick fel – PDF-studio</title>
+<style>
+body{margin:0;background:#F7F8F6;color:#141614;font-family:"General Sans","Segoe UI",-apple-system,sans-serif;font-size:17px;line-height:1.5}
+main{max-width:520px;margin:12vh auto 0;padding:40px 32px;background:#FFFFFF;border:1px solid #E7E9E4;border-radius:4px}
+h1{margin:0 0 8px;font-size:28px;letter-spacing:-0.015em}
+p{margin:0 0 16px;color:#5A5F59}
+code{display:inline-block;padding:6px 10px;background:#F1F2EF;border-radius:2px;color:#141614;font-size:16px}
+a{color:#3D804A}
+</style>
+</head>
+<body>
+<main>
+<h1>Något gick fel</h1>
+<p>Felet är loggat. Försök igen om en stund.</p>
+<p>Om det händer igen, ange ärendenumret när du felanmäler:</p>
+<p><code>{{ request_id }}</code></p>
+<p><a href="/">Till startsidan</a></p>
+</main>
+</body>
+</html>

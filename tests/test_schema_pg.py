@@ -51,6 +51,37 @@ def test_en_andrad_migration_stoppar_allt(pg_database: Callable[[], str], tmp_pa
     engine.dispose()
 
 
+def test_radlaset_laser_om_det_sessionen_redan_last(pg_database: Callable[[], str]) -> None:
+    """Två samtidiga sessioner: den andra ska se vad den första just skrev, inte det den läste innan (F0-17)."""
+    from sqlalchemy.orm import Session
+
+    from core.locking import lock
+    from models import Job
+    engine = create_engine(pg_database())
+    migrations.migrate(engine, 'tenant')
+    with engine.begin() as conn:
+        conn.exec_driver_sql("INSERT INTO users (id, username, display_name, is_admin, active, failed_logins, "
+                             "created_at) VALUES (1, 'anna', 'Anna', false, true, 0, now())")
+        conn.exec_driver_sql("INSERT INTO documents (id, title, owner_id, created_at) VALUES (1, 'Offert', 1, now())")
+        conn.exec_driver_sql("INSERT INTO document_versions (id, document_id, version_no, storage_key, sha256, "
+                             "page_count, size_bytes, source, created_by, created_at) VALUES "
+                             "(1, 1, 1, 'p/documents/1.pdf', repeat('0', 64), 1, 10, 'upload', 1, now())")
+        conn.exec_driver_sql("INSERT INTO jobs (id, kind, status, version_id, requested_by, cost_sek, created_at) "
+                             "VALUES (1, 'ocr', 'queued', 1, 1, 0, now())")
+    with Session(engine) as first, Session(engine) as second:
+        stale = first.get(Job, 1)
+        assert stale is not None and stale.status == 'queued'
+        job = second.get(Job, 1)
+        assert job is not None
+        job.status = 'running'
+        second.commit()
+        locked = lock(first, Job, 1)
+        assert locked is stale
+        assert locked.status == 'running'
+        first.rollback()
+    engine.dispose()
+
+
 def test_frammande_nycklar_stoppar_radering_i_postgresql(pg_database: Callable[[], str]) -> None:
     engine = create_engine(pg_database())
     migrations.migrate(engine, 'tenant')

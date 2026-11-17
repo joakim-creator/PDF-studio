@@ -30,15 +30,15 @@ affärslogik. Fasen är klar när något går att köra och pröva.
 | F0-07 | `seed.sql` med testdata — **rader i varje delad tabell** | KLAR | `tests/seed.py` (som i PE Portal), vaktprov att varje tabell har seed |
 | F0-08 | Testuppsättning + vaktprov för schema och åtkomst | KLAR | SQLite-mall plus PostgreSQL per prov; 35 prov, varje vakt sedd falla |
 | F0-09 | Verify-skript (lint, typkontroll, prov i ett kommando; fäller om databasproven hoppas över) och CI `verify.yml` vid varje push — **och beroendeskanning** (`pip-audit`/`npm audit`) | KLAR | Databasproven körs lokalt mot Docker och krävs i CI (`--require-pg`). versionering.md "CI och utläggning" |
-| F0-10 | Bakom proxy: lita på exakt en (`X-Forwarded-For`/`-Proto`), ärendenummer `X-Request-ID` från Nginx | TODO | [backend-grund.md](docs/backend-grund.md) 1 |
-| F0-11 | Ärendenummer, loggrad per anrop, felsida utan detaljer, `/health`, felrapportering (GlitchTip) med tvätt och timtak | TODO | backend-grund 3 |
+| F0-10 | Bakom proxy: lita på exakt en (`X-Forwarded-For`/`-Proto`), ärendenummer `X-Request-ID` från Nginx | KLAR | `core/security.py`, ProxyFix med en betrodd proxy. Nginx-raderna kommer med servern i F0-20. [backend-grund.md](docs/backend-grund.md) 1 |
+| F0-11 | Ärendenummer, loggrad per anrop, felsida utan detaljer, `/health`, felrapportering (GlitchTip) med tvätt och timtak | PÅGÅR | Koden klar: felsida, `/health` mot master och alla bolag med migrationsstatus, tvättad rapport, tak 50/timme. Kvar: GlitchTip-konto och larm (driftsattning.md steg 2). backend-grund 3 |
 | F0-12 | Backupskript (alla databaser + filer → egen hink), kontroll av återställd databas, **återställningsprov med datum** | TODO | backend-grund 4 |
 | F0-13 | Inloggning: SSO som huvudväg; lokala konton med lösenord **och** engångskod, 12 tecken, spärr per konto, inloggningslogg | TODO | backend-grund 2, 6 |
-| F0-14 | Konton inaktiveras i stället för att raderas; pågående session upphör | TODO | backend-grund 5 |
-| F0-15 | Händelselogg (`audit_events`) och tillägg för destruktiva åtgärder; administratör får inga tillägg automatiskt | TODO | backend-grund 7 |
+| F0-14 | Konton inaktiveras i stället för att raderas; pågående session upphör | PÅGÅR | `core/accounts.py`: inaktivering kräver `konton.hantera` och loggas; vaktprov att konton aldrig raderas. Kvar: pågående session upphör, när inloggningen finns (F0-13). backend-grund 5 |
+| F0-15 | Händelselogg (`audit_events`) och tillägg för destruktiva åtgärder; administratör får inga tillägg automatiskt | KLAR | `core/audit.py`, `core/accounts.py`: tillägg delas ut uttryckligen, ingen ger sig själv något, allt loggas. backend-grund 7 |
 | F0-16 | GDPR: förteckning utan "bestäms senare", gallringsregel som kod med torrkörning, roll som beslutar, registerutdrag | TODO | backend-grund 10 |
-| F0-17 | Främmande nycklar på i proven; radlås läser om; säkerhetshuvuden; index på FK-kolumner | PÅGÅR | FK på i proven och index på FK klara (F0-04). Kvar: radlås, säkerhetshuvuden. backend-grund 9, 12 |
-| F0-18 | Modulgränser som vaktprov (beroendematris); kärnan importerar aldrig en modul | TODO | backend-grund 11 |
+| F0-17 | Främmande nycklar på i proven; radlås läser om; säkerhetshuvuden; index på FK-kolumner | KLAR | FK och index (F0-04); `core/locking.py` låser och läser om, provat med två sessioner i PostgreSQL; säkerhetshuvuden med CSP i rapportläge. backend-grund 9, 12 |
+| F0-18 | Modulgränser som vaktprov (beroendematris); kärnan importerar aldrig en modul | KLAR | Vaktprov i `tests/test_vakt.py`; matrisen står i provets beskrivning. backend-grund 11 |
 | F0-19 | Provfixtur från mallfil: schema + seed byggs en gång per körning, varje prov kopierar filen; mål under 0,2 s per prov och hela verify under 5 min | KLAR | 35 prov på 1,4 s (2026-11-16) | backend-grund 13 |
 | F0-20 | Grenarna `main`/`dev`, `deploy-dev` vid push till `dev`, deploy-användare låst till `status`/`deploy`, migrationer före koden, hälsokontroll och återgång | TODO | versionering.md, driftsattning.md steg 5 |
 | F0-21 | Släpp till produktionen: `release.yml` (bara `main`, `SLAPP`), skydd på `main` (kräver grön verify) | TODO | versionering.md |

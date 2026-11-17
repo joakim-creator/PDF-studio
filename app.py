@@ -9,7 +9,7 @@ from typing import Any
 
 from flask import Flask
 
-from core import observability
+from core import observability, security
 from core.db_routing import MASTER_BIND, master_engine_options
 from extensions import db
 
@@ -35,4 +35,5 @@ def create_app(config: dict[str, Any] | None = None) -> Flask:
     import models  # noqa: F401 — registrerar bolagstabellerna
 
     observability.init_app(app)
+    security.init_app(app)
     return app
